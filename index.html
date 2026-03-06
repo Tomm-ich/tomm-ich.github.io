@@ -1366,6 +1366,7 @@ let gameState = {
   tutorialDone:false,
   leaderboard: JSON.parse(JSON.stringify(FAKE_PLAYERS)),
   tickCount:0,
+  recentEventIds:[],
   sickTeacher:null,
   sickUntil:0,
   disabledBuildings:{},
@@ -1468,8 +1469,6 @@ function gameTick() {
 
   // Random event 1% chance — weighted to avoid immediate repeats
   if (Math.random() < EVENT_TRIGGER_CHANCE) {
-    const now2 = Date.now();
-    if (!gameState.recentEventIds) gameState.recentEventIds = [];
     // Filter out events that fired in the last 60 ticks (stored as ids)
     const eligible = EVENTS.filter(ev => !gameState.recentEventIds.includes(ev.id));
     const pool = eligible.length > 0 ? eligible : EVENTS;
@@ -1511,8 +1510,8 @@ function gameTick() {
     gameState.sickTeacher = null;
   }
 
-  // Reset daily quests every 300 ticks
-  if (gameState.tickCount % (QUEST_RESET_INTERVAL_MS / 1000) === 0) {
+  // Reset daily quests based on elapsed time since last reset
+  if (Date.now() - gameState.quests.lastReset >= QUEST_RESET_INTERVAL_MS) {
     resetDailyQuests();
   }
 
@@ -2104,9 +2103,8 @@ function loadGame() {
     const raw = localStorage.getItem('ichthus_tycoon_save');
     if (!raw) return null;
     const saved = JSON.parse(raw);
-    // Merge with defaults for missing fields
+    // Merge with defaults for missing top-level fields
     const defaults = {
-      quests: gameState.quests,
       leaderboard: JSON.parse(JSON.stringify(FAKE_PLAYERS)),
       achievementDates: {},
       disabledBuildings: {},
@@ -2118,9 +2116,25 @@ function loadGame() {
       sickTeacher: null,
       sickUntil: 0,
       logoClickCount: 0,
+      recentEventIds: [],
     };
     for (const k of Object.keys(defaults)) {
       if (saved[k] === undefined) saved[k] = defaults[k];
+    }
+    // Deep-merge quests: ensure all daily quest keys exist in loaded data
+    if (!saved.quests || typeof saved.quests !== 'object') {
+      saved.quests = gameState.quests;
+    } else {
+      if (!saved.quests.daily || typeof saved.quests.daily !== 'object') {
+        saved.quests.daily = gameState.quests.daily;
+      } else {
+        for (const [key, val] of Object.entries(gameState.quests.daily)) {
+          if (!saved.quests.daily[key] || typeof saved.quests.daily[key] !== 'object') {
+            saved.quests.daily[key] = val;
+          }
+        }
+      }
+      if (saved.quests.lastReset === undefined) saved.quests.lastReset = Date.now();
     }
     Object.assign(gameState, saved);
     return saved;
@@ -3171,25 +3185,29 @@ function fmt(n) {
 // ============================================================
 document.addEventListener('keydown', handleKeyboardEgg);
 
-document.getElementById('player-name-input').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') startNewGame();
-});
-
-// Close modals on overlay click
-document.querySelectorAll('.modal-overlay').forEach(overlay => {
-  overlay.addEventListener('click', function(e) {
-    if (e.target === this) {
-      const id = this.id;
-      if (id !== 'welcome-modal') closeModal(id);
-    }
-  });
-});
-
 // Initialize once
 let _gameInited = false;
 function _tryInit() {
   if (_gameInited) return;
   _gameInited = true;
+
+  const nameInput = document.getElementById('player-name-input');
+  if (nameInput) {
+    nameInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') startNewGame();
+    });
+  }
+
+  // Close modals on overlay click
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', function(e) {
+      if (e.target === this) {
+        const id = this.id;
+        if (id !== 'welcome-modal') closeModal(id);
+      }
+    });
+  });
+
   initGame();
 }
 if (document.readyState === 'loading') {
