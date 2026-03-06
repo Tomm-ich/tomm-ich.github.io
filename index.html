@@ -6,6 +6,11 @@
   <title>Ichthus Tycoon</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Firebase compat CDN (no build step required) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics-compat.js"></script>
   <style>
 :root {
   --primary: #003366;
@@ -783,6 +788,14 @@ input:checked + .toggle-slider::before{transform:translateX(20px)}
       <span class="prestige-star" id="prestige-display"></span>
     </div>
     <button id="dark-toggle" onclick="toggleDarkMode()" title="Donker/Licht modus">🌙</button>
+    <div id="auth-area">
+      <button id="btn-login-google" class="btn btn-sm btn-accent">🔑 Login Google</button>
+      <button id="btn-login-ms" class="btn btn-sm btn-outline" style="color:#fff;border-color:rgba(255,255,255,0.4)">🪟 Login Microsoft</button>
+      <div id="auth-user" style="display:none" class="player-badge">
+        <span id="auth-name"></span>
+        <button id="btn-logout" class="btn btn-sm btn-ghost" style="color:#fff;font-size:11px">Uitloggen</button>
+      </div>
+    </div>
     <button id="mobile-menu-btn" onclick="toggleSidebar()" title="Menu">☰</button>
   </div>
 </header>
@@ -1077,6 +1090,33 @@ input:checked + .toggle-slider::before{transform:translateX(20px)}
 
 <script>
 'use strict';
+// ============================================================
+// FIREBASE SETUP
+// Firestore security rules (for reference):
+// rules_version = '2';
+// service cloud.firestore {
+//   match /databases/{database}/documents {
+//     match /leaderboard/{userId} {
+//       allow read: if true;
+//       allow write: if request.auth != null && request.auth.uid == userId;
+//     }
+//   }
+// }
+// ============================================================
+const firebaseConfig = {
+  apiKey: "AIzaSyCFivXcysh3NVs3jd4Gj4ne6vZ3yv3mTss",
+  authDomain: "ichthus-tycoon.firebaseapp.com",
+  projectId: "ichthus-tycoon",
+  storageBucket: "ichthus-tycoon.firebasestorage.app",
+  messagingSenderId: "1007841871474",
+  appId: "1:1007841871474:web:e9dbc2f0e61d40fad7e4eb",
+  measurementId: "G-7T8HEW66VH"
+};
+firebase.initializeApp(firebaseConfig);
+const fbAuth = firebase.auth();
+const fbDb = firebase.firestore();
+let fbLeaderboardUnsubscribe = null;
+
 // ============================================================
 // GAME CONSTANTS
 // ============================================================
@@ -1494,6 +1534,7 @@ function gameTick() {
   if (gameState.tickCount % 60 === 0) {
     saveGame();
     showNotification('Opgeslagen! 💾', 'info');
+    syncLeaderboardToFirestore();
   }
 
   // Update active events (remove expired)
@@ -2459,7 +2500,18 @@ function renderStaff() {
 function renderLeaderboard() {
   const container = document.getElementById('leaderboard-container');
   if (!container) return;
-  // Build combined list
+
+  if (fbAuth.currentUser) {
+    // Firestore real-time leaderboard (subscription set up in navigateTo)
+    // This function just renders whatever is already in the container via the snapshot listener
+    return;
+  }
+
+  // Not logged in: show fake leaderboard with login banner
+  container.innerHTML = '<div style="background:var(--accent);color:#fff;border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:16px;font-size:14px;font-weight:600;text-align:center">🔑 Log in om het echte leaderboard te zien!</div>' + buildFakeLeaderboardHTML();
+}
+
+function buildFakeLeaderboardHTML() {
   const playerEntry = {
     id:'__player__',
     name: gameState.playerName || 'Jij',
@@ -2492,6 +2544,36 @@ function renderLeaderboard() {
     html += '<td>' + (p.buildings || 0) + '</td>';
     html += '<td>' + (p.staff || 0) + '</td>';
     html += '<td class="prestige-stars">' + (p.prestige > 0 ? '✨'.repeat(Math.min(p.prestige, 5)) : '—') + '</td>';
+    html += '</tr>';
+  }
+  html += '</tbody></table></div>';
+  return html;
+}
+
+function renderFirestoreLeaderboard(snapshot) {
+  const container = document.getElementById('leaderboard-container');
+  if (!container) return;
+  const currentUid = fbAuth.currentUser ? fbAuth.currentUser.uid : null;
+  const docs = [];
+  snapshot.forEach(doc => docs.push({ uid: doc.id, ...doc.data() }));
+  let html = '<div style="margin-bottom:12px;font-size:14px;color:var(--text-secondary)">🌐 Live leaderboard — top ' + docs.length + ' spelers</div>';
+  html += '<div style="overflow-x:auto"><table class="lb-table"><thead><tr>';
+  html += '<th>#</th><th>Naam</th><th>REP</th><th>Prestige</th>';
+  html += '</tr></thead><tbody>';
+  for (let i = 0; i < docs.length; i++) {
+    const p = docs[i];
+    const rank = i + 1;
+    const isMe = p.uid === currentUid;
+    let rankBadge = '';
+    if (rank === 1) rankBadge = '<span class="rank-badge rank-1">🥇</span>';
+    else if (rank === 2) rankBadge = '<span class="rank-badge rank-2">🥈</span>';
+    else if (rank === 3) rankBadge = '<span class="rank-badge rank-3">🥉</span>';
+    else rankBadge = '<span class="rank-badge rank-other">' + rank + '</span>';
+    html += '<tr class="' + (isMe ? 'player-row' : '') + '">';
+    html += '<td>' + rankBadge + '</td>';
+    html += '<td><div class="lb-name">' + escHtml(p.name || '?') + (isMe ? '<span class="lb-you-badge">JIJ</span>' : '') + '</div></td>';
+    html += '<td><strong>' + Math.floor(p.rep || 0).toLocaleString('nl-NL') + '</strong></td>';
+    html += '<td class="prestige-stars">' + ((p.prestige || 0) > 0 ? '✨'.repeat(Math.min(p.prestige, 5)) : '—') + '</td>';
     html += '</tr>';
   }
   html += '</tbody></table></div>';
@@ -2917,11 +2999,16 @@ function navigateTo(tab) {
   document.querySelectorAll('.nav-item').forEach(el => {
     el.classList.toggle('active', el.dataset.tab === tab);
   });
+  // Unsubscribe previous leaderboard listener when leaving leaderboard tab
+  if (tab !== 'leaderboard' && fbLeaderboardUnsubscribe) {
+    fbLeaderboardUnsubscribe();
+    fbLeaderboardUnsubscribe = null;
+  }
   // Render the tab
   switch(tab) {
     case 'campus': renderCampus(); break;
     case 'docenten': renderStaff(); break;
-    case 'leaderboard': renderLeaderboard(); break;
+    case 'leaderboard': renderLeaderboard(); subscribeFirestoreLeaderboard(); break;
     case 'raids': renderRaids(); break;
     case 'quests': renderQuests(); break;
     case 'achievements': renderAchievements(); break;
@@ -3209,12 +3296,96 @@ function _tryInit() {
   });
 
   initGame();
+  // Apply Firebase user info if auth state was already resolved before game init
+  const fbUser = fbAuth.currentUser;
+  if (fbUser) {
+    gameState.playerName = fbUser.displayName || fbUser.email;
+    saveGame();
+    syncLeaderboardToFirestore();
+  }
 }
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', _tryInit);
 } else {
   _tryInit();
 }
+
+// ============================================================
+// FIREBASE AUTH & FIRESTORE LEADERBOARD
+// ============================================================
+function syncLeaderboardToFirestore() {
+  const user = fbAuth.currentUser;
+  if (!user) return;
+  fbDb.collection('leaderboard').doc(user.uid).set({
+    name: user.displayName || user.email,
+    rep: Math.floor(gameState.rep),
+    prestige: gameState.prestige || 0,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).catch(err => console.warn('Leaderboard sync failed:', err));
+}
+
+function subscribeFirestoreLeaderboard() {
+  if (!fbAuth.currentUser) return;
+  // Unsubscribe any previous listener first
+  if (fbLeaderboardUnsubscribe) {
+    fbLeaderboardUnsubscribe();
+    fbLeaderboardUnsubscribe = null;
+  }
+  fbLeaderboardUnsubscribe = fbDb.collection('leaderboard')
+    .orderBy('rep', 'desc')
+    .limit(25)
+    .onSnapshot(snapshot => {
+      if (currentTab === 'leaderboard') {
+        renderFirestoreLeaderboard(snapshot);
+      }
+    }, err => {
+      console.warn('Leaderboard snapshot error:', err);
+    });
+}
+
+document.getElementById('btn-login-google').addEventListener('click', () => {
+  fbAuth.signInWithPopup(new firebase.auth.GoogleAuthProvider())
+    .catch(err => showNotification('Google login mislukt: ' + err.message, 'error'));
+});
+
+document.getElementById('btn-login-ms').addEventListener('click', () => {
+  fbAuth.signInWithPopup(new firebase.auth.OAuthProvider('microsoft.com'))
+    .catch(err => showNotification('Microsoft login mislukt: ' + err.message, 'error'));
+});
+
+document.getElementById('btn-logout').addEventListener('click', () => fbAuth.signOut().catch(err => console.warn('Sign out failed:', err)));
+
+fbAuth.onAuthStateChanged(user => {
+  if (user) {
+    document.getElementById('btn-login-google').style.display = 'none';
+    document.getElementById('btn-login-ms').style.display = 'none';
+    document.getElementById('auth-user').style.display = 'flex';
+    document.getElementById('auth-name').textContent = user.displayName || user.email;
+    // Override player name in game state (only after game is initialized to avoid overwriting save)
+    if (_gameInited) {
+      gameState.playerName = user.displayName || user.email;
+      saveGame();
+      syncLeaderboardToFirestore();
+      // Refresh leaderboard if currently on that tab
+      if (currentTab === 'leaderboard') {
+        subscribeFirestoreLeaderboard();
+      }
+    }
+  } else {
+    document.getElementById('btn-login-google').style.display = '';
+    document.getElementById('btn-login-ms').style.display = '';
+    document.getElementById('auth-user').style.display = 'none';
+    // Unsubscribe Firestore listener on logout
+    if (fbLeaderboardUnsubscribe) {
+      fbLeaderboardUnsubscribe();
+      fbLeaderboardUnsubscribe = null;
+    }
+    // Re-render leaderboard with fake data if on that tab
+    if (_gameInited && currentTab === 'leaderboard') {
+      renderLeaderboard();
+    }
+  }
+});
 </script>
 </body>
 </html>
