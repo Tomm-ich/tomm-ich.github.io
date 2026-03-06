@@ -1410,7 +1410,8 @@ function startNewGame() {
   gameState.playerName = name;
   // Free starting teacher (common rarity)
   const commons = TEACHERS.filter(t => t.rarity === 'common');
-  const freeTeacher = commons[Math.floor(Math.random() * commons.length)];
+  const teacherPool = commons.length > 0 ? commons : TEACHERS;
+  const freeTeacher = teacherPool[Math.floor(Math.random() * teacherPool.length)];
   gameState.staff.push(freeTeacher.id);
   saveGame();
   document.getElementById('welcome-modal').classList.add('hidden');
@@ -2006,7 +2007,7 @@ function checkAchievements() {
           spawnConfetti();
           newUnlock = true;
         }
-      } catch(e) {}
+      } catch(e) { console.warn('Achievement check error:', ach.id, e); }
     }
   }
   if (newUnlock) updateNavBadges();
@@ -2081,7 +2082,7 @@ function saveGame() {
   try {
     gameState.lastSave = Date.now();
     localStorage.setItem('ichthus_tycoon_save', JSON.stringify(gameState));
-  } catch(e) { console.warn('Save failed:', e); }
+  } catch(e) { console.warn('Save failed:', e); showNotification('Opslaan mislukt! (localStorage vol?)', 'error', 'Opslaan Mislukt'); }
 }
 
 function loadGame() {
@@ -2109,7 +2110,7 @@ function loadGame() {
     }
     Object.assign(gameState, saved);
     return saved;
-  } catch(e) { console.warn('Load failed:', e); return null; }
+  } catch(e) { console.warn('Load failed:', e); showNotification('Opgeslagen spel kon niet worden geladen. Nieuw spel gestart!', 'warning', 'Laden Mislukt'); return null; }
 }
 
 function resetGame() {
