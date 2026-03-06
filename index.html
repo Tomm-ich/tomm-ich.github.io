@@ -714,7 +714,8 @@ input:checked + .toggle-slider::before{transform:translateX(20px)}
     <div class="welcome-sub">Bouw de beste school van Nederland!<br><small>Een spel voor Ichthus Lyceum</small></div>
     <div class="form-group">
       <label class="form-label" for="player-name-input">Jouw naam (of bijnaam):</label>
-      <input id="player-name-input" class="form-input" type="text" placeholder="bijv. Directeur Jansen" maxlength="24" autocomplete="off"/>
+      <input id="player-name-input" class="form-input" type="text" placeholder="bijv. Directeur Jansen" maxlength="24" autocomplete="off" aria-describedby="name-error"/>
+      <div id="name-error" role="alert" aria-live="polite" style="color:var(--danger);font-size:12px;margin-top:4px;min-height:16px"></div>
     </div>
     <button class="btn btn-accent btn-lg w-full" onclick="startNewGame()">🚀 Start het spel!</button>
     <p style="text-align:center;font-size:11px;color:var(--text-secondary);margin-top:12px">Geen externe servers. Alles wordt lokaal opgeslagen.</p>
@@ -977,7 +978,7 @@ input:checked + .toggle-slider::before{transform:translateX(20px)}
   <!-- QUESTS TAB -->
   <div class="tab-content" data-tab="quests">
     <div class="page-header">
-      <h2 class="page-title">📋 Dagelijkse Quests</h2>
+      <h2 class="page-title">📋 Dagelijkse Quests <span style="font-size:13px;font-weight:400;color:var(--text-secondary)">(reset elke 5 min)</span></h2>
       <p class="page-subtitle" id="quest-reset-text">Reset over: —</p>
     </div>
     <div id="quests-container" class="quests-grid"></div>
@@ -1404,7 +1405,9 @@ function startNewGame() {
   if (!name) {
     nameInput.focus();
     nameInput.style.borderColor = 'var(--danger)';
-    setTimeout(() => nameInput.style.borderColor = '', 1500);
+    const errEl = document.getElementById('name-error');
+    if (errEl) errEl.textContent = 'Voer een naam in om verder te gaan.';
+    setTimeout(() => { nameInput.style.borderColor = ''; if (errEl) errEl.textContent = ''; }, 2000);
     return;
   }
   gameState.playerName = name;
@@ -1463,9 +1466,17 @@ function gameTick() {
     gameState.chaos = Math.max(0, gameState.chaos - 0.1);
   }
 
-  // Random event 1% chance
+  // Random event 1% chance — weighted to avoid immediate repeats
   if (Math.random() < EVENT_TRIGGER_CHANCE) {
-    const ev = EVENTS[Math.floor(Math.random() * EVENTS.length)];
+    const now2 = Date.now();
+    if (!gameState.recentEventIds) gameState.recentEventIds = [];
+    // Filter out events that fired in the last 60 ticks (stored as ids)
+    const eligible = EVENTS.filter(ev => !gameState.recentEventIds.includes(ev.id));
+    const pool = eligible.length > 0 ? eligible : EVENTS;
+    const ev = pool[Math.floor(Math.random() * pool.length)];
+    // Track last 3 events to avoid repeats
+    gameState.recentEventIds.push(ev.id);
+    if (gameState.recentEventIds.length > 3) gameState.recentEventIds.shift();
     triggerEvent(ev);
   }
 
@@ -1535,10 +1546,13 @@ function gameTick() {
 function calculateProduction() {
   let totCoins = 0, totRep = 0, totEnergy = 0, totChaos = 0, totKnowledge = 0;
   const now = Date.now();
-  const ownedPerkIds = gameState.staff.map(sid => {
+  // Build a map of perkId -> staffId for O(1) lookup in the global perks loop
+  const perkToStaffId = new Map();
+  for (const sid of gameState.staff) {
     const t = TEACHERS.find(x => x.id === sid);
-    return t ? t.perkId : null;
-  }).filter(Boolean);
+    if (t && t.perkId) perkToStaffId.set(t.perkId, sid);
+  }
+  const ownedPerkIds = Array.from(perkToStaffId.keys());
   const hasRector = gameState.buildings.some(b => b.id === 'rector');
   const boosterActive = gameState.booster > now;
 
@@ -1588,7 +1602,7 @@ function calculateProduction() {
 
   // Global teacher perks
   for (const perkId of ownedPerkIds) {
-    const teacherId = gameState.staff.find(sid => { const t = TEACHERS.find(x => x.id===sid); return t && t.perkId===perkId; });
+    const teacherId = perkToStaffId.get(perkId);
     if (teacherId === gameState.sickTeacher) continue;
     switch(perkId) {
       case 'knowledge_boost_30': totKnowledge += totKnowledge * 0.3; break;
@@ -2082,7 +2096,7 @@ function saveGame() {
   try {
     gameState.lastSave = Date.now();
     localStorage.setItem('ichthus_tycoon_save', JSON.stringify(gameState));
-  } catch(e) { console.warn('Save failed:', e); showNotification('Opslaan mislukt! (localStorage vol?)', 'error', 'Opslaan Mislukt'); }
+  } catch(e) { console.warn('Save failed:', e); showNotification('Opslaan mislukt! Verwijder oude browserdata of schakel cookies in voor deze site.', 'error', 'Opslaan Mislukt'); }
 }
 
 function loadGame() {
