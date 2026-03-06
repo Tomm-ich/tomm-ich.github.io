@@ -1274,7 +1274,7 @@ function updateAuthUI(user) {
     if (loginBtn) loginBtn.style.display = 'none';
     if (logoutBtn) logoutBtn.style.display = 'block';
     if (statusEl) {
-      const avatarUrl = user.photoURL;
+      const avatarUrl = sanitizeImageUrl(user.photoURL);
       statusEl.innerHTML = (avatarUrl ? '<img src="' + escHtml(avatarUrl) + '" style="width:24px;height:24px;border-radius:50%;margin-right:6px;vertical-align:middle" onerror="this.remove()">' : '👤 ') + escHtml(user.displayName || user.email || 'Ingelogd');
     }
     if (badge) {
@@ -2831,7 +2831,7 @@ function renderLeaderboard() {
     statusBanner = '<div style="background:rgba(0,0,0,0.04);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px">' +
       '<div style="font-size:14px;font-weight:700;margin-bottom:6px">🔒 Leaderboard is offline</div>' +
       '<div style="font-size:13px;color:var(--text-secondary)">Configureer Firebase om je score op te slaan en met andere Ichthus-leerlingen te concurreren.</div>' +
-      '<a href="https://console.firebase.google.com/" target="_blank" class="btn btn-primary btn-sm" style="display:inline-flex;margin-top:10px">🔥 Firebase instellen</a>' +
+      '<a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm" style="display:inline-flex;margin-top:10px">🔥 Firebase instellen</a>' +
       '</div>';
     allPlayers = [playerEntry, ...DEMO_PLAYERS];
     allPlayers.sort((a,b) => b.rep - a.rep);
@@ -2860,7 +2860,7 @@ function renderLeaderboard() {
     const name = p.displayName || p.name || 'Anoniem';
     html += '<tr class="' + (isPlayer ? 'player-row' : '') + (isDemo ? ' demo-row' : '') + '">';
     html += '<td>' + rankBadge + '</td>';
-    const photoURL = p.photoURL;
+    const photoURL = sanitizeImageUrl(p.photoURL);
     const avatar = photoURL ? '<img src="' + escHtml(photoURL) + '" style="width:22px;height:22px;border-radius:50%;vertical-align:middle;margin-right:6px" onerror="this.remove()">' : '';
     html += '<td><div class="lb-name">' + avatar + escHtml(name) + (isPlayer ? '<span class="lb-you-badge">JIJ</span>' : '') + (isDemo ? '<span style="font-size:10px;color:var(--text-tertiary);margin-left:4px">(demo)</span>' : '') + '</div></td>';
     html += '<td style="font-size:12px;color:var(--text-secondary)">' + escHtml(p.schoolClass || p.class || '—') + '</td>';
@@ -3342,11 +3342,14 @@ function renderProfiel() {
 }
 
 function navigateTo(tab) {
+  // Allowlist of valid tab names to prevent CSS selector injection
+  const VALID_TABS = ['campus','docenten','upgrades','leaderboard','raids','quests','achievements','shop','settings','profiel'];
+  if (!VALID_TABS.includes(tab)) return;
   currentTab = tab;
   // Hide all tabs
   document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-  // Show target tab
-  const target = document.querySelector('[data-tab="' + tab + '"]');
+  // Show target tab — use find-by-dataset to avoid selector injection risk
+  const target = Array.from(document.querySelectorAll('.tab-content')).find(el => el.dataset.tab === tab);
   if (target) target.classList.add('active');
   // Update nav items
   document.querySelectorAll('.nav-item').forEach(el => {
@@ -3659,6 +3662,16 @@ function capFirst(str) {
 
 function escHtml(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Only allow https:// URLs to prevent javascript: and data: protocol injection
+function sanitizeImageUrl(url) {
+  if (!url || typeof url !== 'string') return null;
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'https:') return null;
+    return url;
+  } catch(e) { return null; }
 }
 
 function fmt(n) {
