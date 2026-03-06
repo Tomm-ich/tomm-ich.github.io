@@ -782,6 +782,9 @@ input:checked + .toggle-slider::before{transform:translateX(20px)}
       <span>Speler</span>
       <span class="prestige-star" id="prestige-display"></span>
     </div>
+    <button id="google-login-btn" style="background:rgba(255,255,255,0.15);border:none;color:#fff;border-radius:20px;padding:5px 14px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;">
+      <span>🔑</span> <span id="login-label">Inloggen</span>
+    </button>
     <button id="dark-toggle" onclick="toggleDarkMode()" title="Donker/Licht modus">🌙</button>
     <button id="mobile-menu-btn" onclick="toggleSidebar()" title="Menu">☰</button>
   </div>
@@ -1488,6 +1491,10 @@ function gameTick() {
   // Simulate leaderboard every 30 ticks
   if (gameState.tickCount % 30 === 0) {
     simulateLeaderboardUpdate();
+    // Sync score to Firestore if logged in
+    if (window._firebase && window._firebase.auth.currentUser) {
+      _syncScoreToFirestore(window._firebase.auth.currentUser);
+    }
   }
 
   // Save every 60 ticks
@@ -2456,23 +2463,47 @@ function renderStaff() {
   grid.innerHTML = html;
 }
 
-function renderLeaderboard() {
+function renderLeaderboard(firestoreRows) {
   const container = document.getElementById('leaderboard-container');
   if (!container) return;
-  // Build combined list
-  const playerEntry = {
-    id:'__player__',
-    name: gameState.playerName || 'Jij',
-    rep: Math.floor(gameState.rep),
-    buildings: gameState.buildings.length,
-    staff: gameState.staff.length,
-    prestige: gameState.prestige,
-    isPlayer: true,
-  };
-  const allPlayers = [...gameState.leaderboard, playerEntry];
-  allPlayers.sort((a,b) => b.rep - a.rep);
-  const playerRank = allPlayers.findIndex(p => p.isPlayer) + 1;
-  let html = '<div style="margin-bottom:12px;font-size:14px;color:var(--text-secondary)">Jouw rang: <strong style="color:var(--accent)">#' + playerRank + '</strong> van ' + allPlayers.length + '</div>';
+
+  let allPlayers;
+  let playerRank;
+
+  if (firestoreRows) {
+    // Firestore live leaderboard: firestoreRows already sorted by rep desc
+    const currentUser = window._firebase && window._firebase.auth.currentUser;
+    const currentUid = currentUser ? currentUser.uid : null;
+    allPlayers = firestoreRows.map(row => ({
+      id: row.uid || '',
+      name: row.name || 'Anoniem',
+      rep: row.rep || 0,
+      buildings: row.buildings || 0,
+      staff: row.staff || 0,
+      prestige: row.prestige || 0,
+      isPlayer: currentUid ? (row.uid === currentUid) : false,
+    }));
+    playerRank = allPlayers.findIndex(p => p.isPlayer) + 1;
+  } else {
+    // Offline/fake leaderboard
+    const playerEntry = {
+      id:'__player__',
+      name: gameState.playerName || 'Jij',
+      rep: Math.floor(gameState.rep),
+      buildings: gameState.buildings.length,
+      staff: gameState.staff.length,
+      prestige: gameState.prestige,
+      isPlayer: true,
+    };
+    allPlayers = [...gameState.leaderboard, playerEntry];
+    allPlayers.sort((a,b) => b.rep - a.rep);
+    playerRank = allPlayers.findIndex(p => p.isPlayer) + 1;
+  }
+
+  const rankLabel = playerRank > 0
+    ? 'Jouw rang: <strong style="color:var(--accent)">#' + playerRank + '</strong> van ' + allPlayers.length
+    : 'Totaal spelers: <strong style="color:var(--accent)">' + allPlayers.length + '</strong>';
+  let html = '<div style="margin-bottom:12px;font-size:14px;color:var(--text-secondary)">' + rankLabel + '</div>';
   html += '<div style="overflow-x:auto"><table class="lb-table"><thead><tr>';
   html += '<th>#</th><th>Naam</th><th>REP</th><th>Gebouwen</th><th>Docenten</th><th>Prestige</th>';
   html += '</tr></thead><tbody>';
@@ -2496,6 +2527,29 @@ function renderLeaderboard() {
   }
   html += '</tbody></table></div>';
   container.innerHTML = html;
+}
+
+function _syncScoreToFirestore(user) {
+  if (!user || !window._firebase) return;
+  const { db, doc, setDoc, serverTimestamp } = window._firebase;
+  setDoc(doc(db, 'leaderboard', user.uid), {
+    uid: user.uid,
+    name: user.displayName || 'Anoniem',
+    rep: Math.floor(gameState.rep),
+    prestige: gameState.prestige || 0,
+    updatedAt: serverTimestamp()
+  }, { merge: true }).catch(err => console.error('Firestore sync failed:', err));
+}
+
+function _listenLeaderboard() {
+  if (!window._firebase) return;
+  const { db, collection, query, orderBy, limit, onSnapshot } = window._firebase;
+  const q = query(collection(db, 'leaderboard'), orderBy('rep', 'desc'), limit(20));
+  onSnapshot(q, (snapshot) => {
+    const rows = [];
+    snapshot.forEach(d => rows.push(Object.assign({ uid: d.id }, d.data())));
+    renderLeaderboard(rows);
+  });
 }
 
 function renderRaids() {
@@ -3215,6 +3269,77 @@ if (document.readyState === 'loading') {
 } else {
   _tryInit();
 }
+</script>
+
+<!--
+Firestore rules:
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /leaderboard/{userId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
+-->
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+  import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, limit, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-analytics.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCFivXcysh3NVs3jd4Gj4ne6vZ3yv3mTss",
+    authDomain: "ichthus-tycoon.firebaseapp.com",
+    projectId: "ichthus-tycoon",
+    storageBucket: "ichthus-tycoon.firebasestorage.app",
+    messagingSenderId: "1007841871474",
+    appId: "1:1007841871474:web:e9dbc2f0e61d40fad7e4eb",
+    measurementId: "G-7T8HEW66VH"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  // expose for use by main game script
+  window._firebase = { auth, db, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, doc, setDoc, getDoc, collection, query, orderBy, limit, onSnapshot, serverTimestamp };
+
+  // Start live leaderboard listener (works even when logged out — read is public)
+  _listenLeaderboard();
+
+  // Auth state listener
+  onAuthStateChanged(auth, (user) => {
+    const loginBtn = document.getElementById('google-login-btn');
+    const loginLabel = document.getElementById('login-label');
+    if (!loginBtn || !loginLabel) return;
+
+    if (user) {
+      loginLabel.textContent = 'Uitloggen';
+      loginBtn.onclick = () => signOut(auth);
+      // Update player badge with Google display name
+      const badge = document.getElementById('player-badge');
+      if (badge) {
+        const nameSpan = badge.querySelector('span:first-child');
+        if (nameSpan) nameSpan.textContent = user.displayName || 'Speler';
+      }
+      // Sync current score immediately on login
+      _syncScoreToFirestore(user);
+    } else {
+      loginLabel.textContent = 'Inloggen';
+      loginBtn.onclick = () => {
+        const provider = new GoogleAuthProvider();
+        signInWithPopup(auth, provider).catch(err => {
+          if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+            console.error('Login failed:', err);
+          }
+        });
+      };
+    }
+  });
 </script>
 </body>
 </html>
