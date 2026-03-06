@@ -5,34 +5,52 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ichthus Tycoon</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
 :root {
-  --primary: #003366;
-  --accent: #F0A500;
-  --success: #28a745;
-  --danger: #dc3545;
-  --bg: #f4f6f9;
-  --card-bg: #ffffff;
-  --text: #1a1a2e;
-  --text-secondary: #6c757d;
-  --border: #dee2e6;
-  --sidebar-width: 200px;
-  --header-height: 64px;
+  --bg: #f5f5f7;
+  --bg-2: #ffffff;
+  --surface: rgba(255,255,255,0.72);
+  --surface-border: rgba(0,0,0,0.08);
+  --primary: #0071e3;
+  --primary-hover: #0077ed;
+  --text-primary: #1d1d1f;
+  --text-secondary: #6e6e73;
+  --text-tertiary: #aeaeb2;
+  --accent-green: #34c759;
+  --accent-orange: #ff9f0a;
+  --accent-red: #ff3b30;
+  --accent-purple: #af52de;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-md: 0 8px 32px rgba(0,0,0,0.12);
+  --shadow-lg: 0 24px 80px rgba(0,0,0,0.16);
+  /* Keep backward compat aliases */
+  --text: #1d1d1f;
+  --card-bg: rgba(255,255,255,0.72);
+  --border: rgba(0,0,0,0.08);
+  --accent: #ff9f0a;
+  --success: #34c759;
+  --danger: #ff3b30;
+  --sidebar-width: 260px;
+  --header-height: 56px;
   --shadow: 0 2px 8px rgba(0,0,0,0.08);
-  --shadow-lg: 0 8px 24px rgba(0,0,0,0.14);
-  --radius: 10px;
-  --radius-sm: 6px;
-  --transition: all 0.2s ease;
+  --radius: 16px;
+  --transition: all 0.2s cubic-bezier(0.25,0.46,0.45,0.94);
 }
 [data-theme="dark"] {
-  --bg: #0d1117;
-  --card-bg: #161b22;
-  --text: #e6edf3;
-  --text-secondary: #8b949e;
-  --border: #30363d;
-  --shadow: 0 2px 8px rgba(0,0,0,0.35);
-  --shadow-lg: 0 8px 24px rgba(0,0,0,0.5);
+  --bg: #000000;
+  --bg-2: #1c1c1e;
+  --card-bg: rgba(28,28,30,0.85);
+  --text: #f5f5f7;
+  --text-primary: #f5f5f7;
+  --text-secondary: #aeaeb2;
+  --border: rgba(255,255,255,0.1);
+  --shadow: 0 2px 8px rgba(0,0,0,0.5);
+  --shadow-lg: 0 24px 80px rgba(0,0,0,0.6);
+  --surface: rgba(28,28,30,0.85);
 }
 /* === RESET === */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -54,28 +72,35 @@ img{max-width:100%}
 #header{
   position:fixed;top:0;left:0;right:0;
   height:var(--header-height);
-  background:var(--primary);
-  color:#fff;
+  background:rgba(255,255,255,0.72);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(0,0,0,0.08);
+  color:var(--text-primary);
   display:flex;align-items:center;gap:12px;padding:0 16px;
   z-index:1000;
-  box-shadow:0 2px 12px rgba(0,0,0,0.25);
+  box-shadow:var(--shadow);
 }
-#header .logo{display:flex;align-items:center;gap:10px;min-width:200px;text-decoration:none;color:#fff;cursor:pointer}
-#header .logo-title{font-weight:800;font-size:17px;letter-spacing:-0.3px;color:#fff}
-#header .logo-sub{font-size:10px;color:rgba(255,255,255,0.65);display:block;line-height:1}
+[data-theme="dark"] #header{
+  background:rgba(28,28,30,0.85);
+  border-bottom-color:rgba(255,255,255,0.1);
+}
+#header .logo{display:flex;align-items:center;gap:10px;min-width:200px;text-decoration:none;color:var(--text-primary);cursor:pointer}
+#header .logo-title{font-weight:800;font-size:17px;letter-spacing:-0.3px;color:var(--text-primary)}
+#header .logo-sub{font-size:10px;color:var(--text-secondary);display:block;line-height:1}
 #resource-bar{display:flex;align-items:center;gap:10px;flex:1;overflow-x:auto;padding:0 8px;min-width:0}
 #resource-bar::-webkit-scrollbar{height:3px}
-.resource-item{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.12);border-radius:20px;padding:4px 10px;white-space:nowrap;font-size:13px;font-weight:600;transition:var(--transition);flex-shrink:0}
-.resource-item:hover{background:rgba(255,255,255,0.2)}
+.resource-item{display:flex;align-items:center;gap:5px;background:rgba(0,0,0,0.04);border-radius:20px;padding:4px 10px;white-space:nowrap;font-size:13px;font-weight:600;transition:var(--transition);flex-shrink:0;color:var(--text-primary)}
+.resource-item:hover{background:rgba(0,0,0,0.08)}
 .resource-icon{font-size:14px}
-.resource-val{color:#fff}
-.resource-rate{color:rgba(255,255,255,0.6);font-size:11px;font-weight:400}
+.resource-val{color:var(--text-primary)}
+.resource-rate{color:var(--text-secondary);font-size:11px;font-weight:400}
 .header-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
-.player-badge{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,0.15);border-radius:20px;padding:5px 12px;font-size:13px;font-weight:600;color:#fff}
+.player-badge{display:flex;align-items:center;gap:7px;background:rgba(0,0,0,0.06);border-radius:20px;padding:5px 12px;font-size:13px;font-weight:600;color:var(--text-primary)}
 .player-badge .prestige-star{color:var(--accent);font-size:12px}
-#dark-toggle{background:rgba(255,255,255,0.15);border:none;color:#fff;border-radius:50%;width:34px;height:34px;font-size:16px;display:flex;align-items:center;justify-content:center;transition:var(--transition);cursor:pointer}
-#dark-toggle:hover{background:rgba(255,255,255,0.28)}
-#mobile-menu-btn{display:none;background:rgba(255,255,255,0.15);border:none;color:#fff;border-radius:6px;width:36px;height:36px;font-size:20px;align-items:center;justify-content:center;cursor:pointer}
+#dark-toggle{background:rgba(0,0,0,0.06);border:none;color:var(--text-primary);border-radius:50%;width:34px;height:34px;font-size:16px;display:flex;align-items:center;justify-content:center;transition:var(--transition);cursor:pointer}
+#dark-toggle:hover{background:rgba(0,0,0,0.12)}
+#mobile-menu-btn{display:none;background:rgba(0,0,0,0.06);border:none;color:var(--text-primary);border-radius:6px;width:36px;height:36px;font-size:20px;align-items:center;justify-content:center;cursor:pointer}
 #booster-indicator{background:var(--accent);color:#000;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700;display:none;animation:pulse 1s infinite}
 #shield-indicator{background:var(--success);color:#fff;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700;display:none;animation:pulse 1s infinite}
 
@@ -84,13 +109,17 @@ img{max-width:100%}
   position:fixed;top:var(--header-height);left:0;
   width:var(--sidebar-width);
   height:calc(100vh - var(--header-height));
-  background:var(--card-bg);
-  border-right:1px solid var(--border);
+  background:rgba(255,255,255,0.85);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border-right:1px solid rgba(0,0,0,0.08);
   overflow-y:auto;overflow-x:hidden;
   z-index:900;
   padding:12px 0 80px;
   transition:transform 0.3s ease;
+  display:flex;flex-direction:column;
 }
+[data-theme="dark"] #sidebar{background:rgba(28,28,30,0.9);border-right-color:rgba(255,255,255,0.1);}
 .nav-section{padding:8px 12px 4px;font-size:10px;font-weight:700;color:var(--text-secondary);letter-spacing:0.8px;text-transform:uppercase;margin-top:4px}
 .nav-item{
   display:flex;align-items:center;gap:10px;
@@ -103,9 +132,9 @@ img{max-width:100%}
   position:relative;
   border-left:3px solid transparent;
 }
-.nav-item:hover{color:var(--text);background:rgba(0,51,102,0.07)}
-.nav-item.active{color:var(--primary);background:rgba(0,51,102,0.1);border-left-color:var(--primary);font-weight:600}
-[data-theme="dark"] .nav-item.active{color:var(--accent);background:rgba(240,165,0,0.1);border-left-color:var(--accent)}
+.nav-item:hover{color:var(--text);background:rgba(0,0,0,0.04)}
+.nav-item.active{color:var(--primary);background:rgba(0,113,227,0.08);border-left-color:var(--primary);font-weight:600}
+[data-theme="dark"] .nav-item.active{color:var(--primary);background:rgba(0,113,227,0.12);border-left-color:var(--primary)}
 .nav-icon{font-size:16px;width:20px;text-align:center}
 .nav-badge{
   margin-left:auto;background:var(--danger);color:#fff;
@@ -131,6 +160,8 @@ img{max-width:100%}
 /* === CARDS === */
 .card{
   background:var(--card-bg);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
   border:1px solid var(--border);
   border-radius:var(--radius);
   padding:18px;
@@ -246,13 +277,11 @@ img{max-width:100%}
   display:inline-block;border-radius:10px;padding:2px 9px;
   font-size:10px;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;
 }
-.rarity-badge.common{background:#e0e0e0;color:#555}
-.rarity-badge.rare{background:#e3f2fd;color:#1565C0}
-.rarity-badge.epic{background:#f3e5f5;color:#6A1B9A}
-.rarity-badge.legendary{background:linear-gradient(90deg,#FFD700,#FFA500);color:#000}
-[data-theme="dark"] .rarity-badge.common{background:#424242;color:#ccc}
-[data-theme="dark"] .rarity-badge.rare{background:#1a3a5c;color:#64b5f6}
-[data-theme="dark"] .rarity-badge.epic{background:#2d1040;color:#ce93d8}
+.rarity-badge.common{background:#aeaeb2;color:#fff}
+.rarity-badge.rare{background:#0071e3;color:#fff}
+.rarity-badge.epic{background:#af52de;color:#fff}
+.rarity-badge.legendary{background:linear-gradient(90deg,#ff9f0a,#ff6b00);color:#fff}
+
 .teacher-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0}
 .stat-row{display:flex;justify-content:space-between;align-items:center;font-size:12px}
 .stat-label{color:var(--text-secondary)}
@@ -282,14 +311,14 @@ img{max-width:100%}
 /* === BUTTONS === */
 .btn{
   display:inline-flex;align-items:center;justify-content:center;gap:7px;
-  padding:9px 18px;border-radius:var(--radius-sm);
+  padding:9px 18px;border-radius:980px;
   font-size:14px;font-weight:600;
   transition:var(--transition);cursor:pointer;border:none;
   line-height:1;white-space:nowrap;
 }
 .btn:active{transform:scale(0.97)}
 .btn:disabled{opacity:0.5;cursor:not-allowed;transform:none!important}
-.btn-sm{padding:6px 12px;font-size:12px}
+.btn-sm{padding:6px 12px;font-size:12px;border-radius:980px}
 .btn-lg{padding:12px 28px;font-size:16px}
 .btn-primary{background:var(--primary);color:#fff}
 .btn-primary:hover:not(:disabled){background:#00245a}
@@ -696,6 +725,9 @@ input:checked + .toggle-slider::before{transform:translateX(20px)}
   .player-badge span:first-child{display:none}
 }
   </style>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js" onerror="console.warn('Firebase app niet beschikbaar')"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js" onerror="console.warn('Firebase auth niet beschikbaar')"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js" onerror="console.warn('Firebase Firestore niet beschikbaar')"></script>
 </head>
 <body>
 
@@ -723,13 +755,16 @@ input:checked + .toggle-slider::before{transform:translateX(20px)}
 </div>
 
 <!-- TUTORIAL OVERLAY -->
-<div id="tutorial-overlay" class="hidden">
-  <div id="tutorial-box" class="tutorial-box">
-    <div class="tutorial-title" id="tutorial-title">Welkom!</div>
-    <div class="tutorial-text" id="tutorial-text">Laten we beginnen.</div>
-    <div class="tutorial-actions">
-      <span class="tutorial-step" id="tutorial-step">Stap 1 / 4</span>
-      <button class="btn btn-accent btn-sm" onclick="nextTutorialStep()">Volgende →</button>
+<div id="tutorial-overlay" class="hidden" style="position:fixed;inset:0;z-index:5500;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--card-bg);backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:24px;padding:40px;max-width:540px;width:100%;box-shadow:0 24px 80px rgba(0,0,0,0.2);position:relative;animation:slideIn 0.3s ease">
+    <button onclick="hideTutorial()" style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:13px;color:var(--text-secondary);cursor:pointer;padding:4px 10px;border-radius:20px;transition:var(--transition)" onmouseover="this.style.background='rgba(0,0,0,0.06)'" onmouseout="this.style.background='none'">Tutorial overslaan</button>
+    <div id="tutorial-step-icon" style="font-size:64px;text-align:center;margin-bottom:20px;animation:bounceIn 0.5s ease">🏫</div>
+    <div id="tutorial-title" style="font-size:22px;font-weight:800;color:var(--text-primary);text-align:center;margin-bottom:10px"></div>
+    <div id="tutorial-text" style="font-size:15px;color:var(--text-secondary);text-align:center;line-height:1.6;margin-bottom:28px"></div>
+    <div style="display:flex;justify-content:center;gap:8px;margin-bottom:24px" id="tutorial-dots"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+      <button id="tutorial-prev-btn" class="btn btn-outline" onclick="prevTutorialStep()">← Vorige</button>
+      <button id="tutorial-next-btn" class="btn btn-primary" onclick="nextTutorialStep()">Volgende →</button>
     </div>
   </div>
 </div>
@@ -827,6 +862,15 @@ input:checked + .toggle-slider::before{transform:translateX(20px)}
   </div>
   <div class="nav-item" data-tab="settings" onclick="navigateTo('settings')">
     <span class="nav-icon">⚙️</span><span>Instellingen</span>
+  </div>
+  <div class="nav-section">Account</div>
+  <div class="nav-item" data-tab="profiel" onclick="navigateTo('profiel')">
+    <span class="nav-icon">👤</span><span>Profiel</span>
+  </div>
+  <div style="padding:12px 16px;margin-top:auto">
+    <div id="login-status-sidebar" style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">Niet ingelogd</div>
+    <button id="sidebar-login-btn" class="btn btn-primary btn-sm w-full" onclick="openModal('login-modal')" style="display:block">Inloggen</button>
+    <button id="sidebar-logout-btn" class="btn btn-outline btn-sm w-full" onclick="logoutUser()" style="display:none">Uitloggen</button>
   </div>
 </nav>
 
@@ -1010,6 +1054,14 @@ input:checked + .toggle-slider::before{transform:translateX(20px)}
     <div id="settings-container"></div>
   </div>
 
+  <!-- PROFIEL TAB -->
+  <div class="tab-content" data-tab="profiel">
+    <div class="page-header">
+      <h2 class="page-title">👤 Profiel</h2>
+    </div>
+    <div id="profiel-container"></div>
+  </div>
+
 </main>
 
 <!-- NOTIFICATIONS -->
@@ -1075,8 +1127,307 @@ input:checked + .toggle-slider::before{transform:translateX(20px)}
   </div>
 </div>
 
+
+<!-- LOGIN MODAL -->
+<div id="login-modal" class="modal-overlay hidden">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div class="modal-title">🔐 Inloggen</div>
+      <button class="modal-close" onclick="closeModal('login-modal')">✕</button>
+    </div>
+    <p class="text-muted text-sm mb-16">Log in om je score op te slaan in het echte leaderboard!</p>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button class="btn w-full" style="background:#fff;color:#1d1d1f;border:1.5px solid rgba(0,0,0,0.12);justify-content:flex-start;gap:12px;padding:12px 18px" onclick="loginWithGoogle()">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/><path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z"/><path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18l2.67-2.07z"/><path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.3z"/></svg>
+        Inloggen met Google
+      </button>
+      <button class="btn w-full" style="background:#0078d4;color:#fff;justify-content:flex-start;gap:12px;padding:12px 18px" onclick="loginWithMicrosoft()">
+        <svg width="18" height="18" viewBox="0 0 18 18"><rect x="1" y="1" width="7" height="7" fill="#f25022"/><rect x="10" y="1" width="7" height="7" fill="#7fba00"/><rect x="1" y="10" width="7" height="7" fill="#00a4ef"/><rect x="10" y="10" width="7" height="7" fill="#ffb900"/></svg>
+        Inloggen met Microsoft
+      </button>
+      <button class="btn w-full" style="background:#5865F2;color:#fff;justify-content:flex-start;gap:12px;padding:12px 18px" onclick="openModal('discord-modal');closeModal('login-modal')">
+        <svg width="18" height="18" viewBox="0 0 71 55" fill="#fff"><path d="M60.1 4.9A58.5 58.5 0 0 0 45.5.4a.2.2 0 0 0-.2.1 40.7 40.7 0 0 0-1.8 3.7 54 54 0 0 0-16.2 0 37.5 37.5 0 0 0-1.8-3.7.2.2 0 0 0-.2-.1A58.4 58.4 0 0 0 10.9 4.9a.2.2 0 0 0-.1.1C1.6 18.7-1 32.2.3 45.5a.2.2 0 0 0 .1.2 58.8 58.8 0 0 0 17.7 8.9.2.2 0 0 0 .2-.1 42 42 0 0 0 3.6-5.9.2.2 0 0 0-.1-.3 38.7 38.7 0 0 1-5.5-2.6.2.2 0 0 1 0-.4c.4-.3.7-.6 1.1-.8a.2.2 0 0 1 .2 0c11.5 5.2 24 5.2 35.3 0a.2.2 0 0 1 .2 0c.4.3.7.5 1.1.8a.2.2 0 0 1 0 .4 36.1 36.1 0 0 1-5.5 2.6.2.2 0 0 0-.1.3 47.1 47.1 0 0 0 3.6 5.9.2.2 0 0 0 .2.1 58.6 58.6 0 0 0 17.8-8.9.2.2 0 0 0 .1-.2c1.5-15.4-2.6-28.8-10.8-40.5a.2.2 0 0 0-.1-.1zM23.7 37.3c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.6 0 6.5 3.3 6.4 7.2 0 4-2.9 7.2-6.4 7.2zm23.6 0c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.6 0 6.5 3.3 6.4 7.2 0 4-2.8 7.2-6.4 7.2z"/></svg>
+        Inloggen met Discord
+      </button>
+    </div>
+    <div class="divider"></div>
+    <button class="btn btn-ghost w-full" onclick="closeModal('login-modal')">Gast spelen (alleen lokaal opgeslagen)</button>
+  </div>
+</div>
+
+<!-- DISCORD MANUAL LOGIN MODAL -->
+<div id="discord-modal" class="modal-overlay hidden">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div class="modal-title">🟣 Discord Aanmelden</div>
+      <button class="modal-close" onclick="closeModal('discord-modal')">✕</button>
+    </div>
+    <div style="background:rgba(88,101,242,0.08);border-radius:12px;padding:12px;margin-bottom:16px">
+      <p class="text-sm" style="color:#5865F2;font-weight:600">ℹ️ Discord OAuth vereist een backend server.</p>
+      <p class="text-sm text-muted mt-4">Voer je naam en Discord gebruikersnaam in om handmatig deel te nemen aan het leaderboard.</p>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Naam:</label>
+      <input id="discord-name-input" class="form-input" type="text" placeholder="Jouw naam" maxlength="24"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Discord gebruikersnaam:</label>
+      <input id="discord-user-input" class="form-input" type="text" placeholder="bijv. jansen#1234" maxlength="32"/>
+    </div>
+    <button class="btn btn-primary w-full" onclick="loginWithDiscordManual()" style="background:#5865F2">Aanmelden</button>
+  </div>
+</div>
+
+<!-- CLASS SELECTION MODAL -->
+<div id="class-modal" class="modal-overlay hidden">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div class="modal-title">🏫 Jouw Klas</div>
+    </div>
+    <p class="text-muted text-sm mb-16">Selecteer jouw klas voor het leaderboard:</p>
+    <div class="form-group">
+      <label class="form-label">Klas:</label>
+      <select id="class-select" class="form-input">
+        <option value="">— Kies je klas —</option>
+        <optgroup label="Brugklas"><option value="1TM">1 T/M</option></optgroup>
+        <optgroup label="2e Klas"><option value="2TM">2 T/M</option></optgroup>
+        <optgroup label="3e Klas">
+          <option value="3MAVO">3 MAVO</option><option value="3HAVO">3 HAVO</option><option value="3VWO">3 VWO</option>
+        </optgroup>
+        <optgroup label="4e Klas">
+          <option value="4MAVO">4 MAVO</option><option value="4HAVO">4 HAVO</option><option value="4VWO">4 VWO</option>
+        </optgroup>
+        <optgroup label="5e Klas">
+          <option value="5HAVO">5 HAVO</option><option value="5VWO">5 VWO</option>
+        </optgroup>
+        <optgroup label="6e Klas"><option value="6VWO">6 VWO</option></optgroup>
+        <optgroup label="Overig"><option value="Docent">Docent</option></optgroup>
+      </select>
+    </div>
+    <button class="btn btn-primary w-full" onclick="saveClassSelection()">Opslaan</button>
+  </div>
+</div>
+
 <script>
 'use strict';
+// ============================================================
+// FIREBASE CONFIGURATION
+// ============================================================
+// INSTRUCTIE: Ga naar https://console.firebase.google.com/
+// Maak een nieuw project, activeer Authentication + Firestore
+// Kopieer je Firebase config hieronder
+// Firestore security rules:
+// match /users/{userId} { allow read, write: if request.auth.uid == userId; }
+// match /leaderboard/{userId} { allow read: if true; allow write: if request.auth.uid == userId; }
+const FIREBASE_CONFIG = {
+  apiKey: "JOUW_API_KEY",
+  authDomain: "JOUW_PROJECT.firebaseapp.com",
+  projectId: "JOUW_PROJECT_ID",
+  storageBucket: "JOUW_PROJECT.appspot.com",
+  messagingSenderId: "JOUW_SENDER_ID",
+  appId: "JOUW_APP_ID"
+};
+
+let firebaseApp = null;
+let firebaseAuth = null;
+let firebaseDb = null;
+let currentUser = null;
+let leaderboardUnsubscribe = null;
+let firestoreConfigured = false;
+
+function initFirebase() {
+  try {
+    if (typeof firebase === 'undefined') return;
+    if (FIREBASE_CONFIG.apiKey === 'JOUW_API_KEY') {
+      console.info('Firebase niet geconfigureerd — spel werkt offline.');
+      return;
+    }
+    firebaseApp = firebase.initializeApp(FIREBASE_CONFIG);
+    firebaseAuth = firebase.auth();
+    firebaseDb = firebase.firestore();
+    firestoreConfigured = true;
+
+    firebaseAuth.onAuthStateChanged(user => {
+      currentUser = user;
+      updateAuthUI(user);
+      if (user) {
+        loadUserDataFromFirestore(user);
+        subscribeLeaderboard();
+        scheduleFirestoreSync();
+      } else {
+        if (leaderboardUnsubscribe) { leaderboardUnsubscribe(); leaderboardUnsubscribe = null; }
+        renderLeaderboard();
+      }
+    });
+  } catch(e) {
+    console.warn('Firebase initialisatie mislukt:', e);
+    firestoreConfigured = false;
+  }
+}
+
+function updateAuthUI(user) {
+  const loginBtn = document.getElementById('sidebar-login-btn');
+  const logoutBtn = document.getElementById('sidebar-logout-btn');
+  const statusEl = document.getElementById('login-status-sidebar');
+  const badge = document.getElementById('player-badge');
+  if (user) {
+    if (loginBtn) loginBtn.style.display = 'none';
+    if (logoutBtn) logoutBtn.style.display = 'block';
+    if (statusEl) {
+      const avatarUrl = sanitizeImageUrl(user.photoURL);
+      statusEl.innerHTML = (avatarUrl ? '<img src="' + escHtml(avatarUrl) + '" style="width:24px;height:24px;border-radius:50%;margin-right:6px;vertical-align:middle" onerror="this.remove()">' : '👤 ') + escHtml(user.displayName || user.email || 'Ingelogd');
+    }
+    if (badge) {
+      const nameSpan = badge.querySelector('span:first-child');
+      if (nameSpan) nameSpan.textContent = user.displayName || gameState.playerName || 'Speler';
+    }
+    if (!gameState.playerName && user.displayName) {
+      gameState.playerName = user.displayName.split(' ')[0];
+      updatePlayerBadge();
+    }
+  } else {
+    if (loginBtn) loginBtn.style.display = 'block';
+    if (logoutBtn) logoutBtn.style.display = 'none';
+    if (statusEl) statusEl.textContent = 'Niet ingelogd';
+  }
+}
+
+function loginWithGoogle() {
+  if (!firebaseAuth) { showNotification('Firebase niet geconfigureerd. Speel als gast.', 'warning'); return; }
+  const provider = new firebase.auth.GoogleAuthProvider();
+  firebaseAuth.signInWithPopup(provider)
+    .then(result => {
+      closeModal('login-modal');
+      showNotification('Ingelogd als ' + result.user.displayName + '!', 'success', '🔐 Ingelogd');
+      if (!gameState.schoolClass) { openModal('class-modal'); }
+    })
+    .catch(e => showNotification('Inloggen mislukt: ' + e.message, 'error'));
+}
+
+function loginWithMicrosoft() {
+  if (!firebaseAuth) { showNotification('Firebase niet geconfigureerd. Speel als gast.', 'warning'); return; }
+  const provider = new firebase.auth.OAuthProvider('microsoft.com');
+  firebaseAuth.signInWithPopup(provider)
+    .then(result => {
+      closeModal('login-modal');
+      showNotification('Ingelogd als ' + result.user.displayName + '!', 'success', '🔐 Ingelogd');
+      if (!gameState.schoolClass) { openModal('class-modal'); }
+    })
+    .catch(e => showNotification('Inloggen mislukt: ' + e.message, 'error'));
+}
+
+function loginWithDiscordManual() {
+  const name = document.getElementById('discord-name-input').value.trim();
+  const discordUser = document.getElementById('discord-user-input').value.trim();
+  if (!name) { showNotification('Voer een naam in.', 'warning'); return; }
+  gameState.playerName = name;
+  gameState.discordUsername = discordUser;
+  updatePlayerBadge();
+  saveGame();
+  closeModal('discord-modal');
+  showNotification('Aangemeld als ' + name + (discordUser ? ' (' + discordUser + ')' : '') + '!', 'success');
+  if (!gameState.schoolClass) { openModal('class-modal'); }
+}
+
+function saveClassSelection() {
+  const sel = document.getElementById('class-select');
+  if (!sel || !sel.value) { showNotification('Kies een klas.', 'warning'); return; }
+  gameState.schoolClass = sel.value;
+  saveGame();
+  closeModal('class-modal');
+  showNotification('Klas opgeslagen: ' + sel.value, 'success');
+  if (currentUser && firebaseDb) { updateLeaderboardEntry(); }
+}
+
+function logoutUser() {
+  if (firebaseAuth) {
+    firebaseAuth.signOut().then(() => {
+      currentUser = null;
+      updateAuthUI(null);
+      showNotification('Uitgelogd.', 'info');
+    });
+  } else {
+    currentUser = null;
+    updateAuthUI(null);
+  }
+}
+
+let firestoreSyncTimer = null;
+function scheduleFirestoreSync() {
+  if (firestoreSyncTimer) clearInterval(firestoreSyncTimer);
+  firestoreSyncTimer = setInterval(() => {
+    if (currentUser && firebaseDb) syncToFirestore();
+  }, 30000);
+}
+
+function syncToFirestore() {
+  if (!currentUser || !firebaseDb) return;
+  try {
+    firebaseDb.collection('users').doc(currentUser.uid).set({ gameState: JSON.stringify(gameState) }, { merge: true });
+    updateLeaderboardEntry();
+  } catch(e) { console.warn('Firestore sync mislukt:', e); }
+}
+
+function loadUserDataFromFirestore(user) {
+  if (!firebaseDb) return;
+  firebaseDb.collection('users').doc(user.uid).get()
+    .then(doc => {
+      if (doc.exists && doc.data().gameState) {
+        try {
+          const saved = JSON.parse(doc.data().gameState);
+          if (saved && saved.playerName) {
+            Object.assign(gameState, saved);
+            renderAll();
+            showNotification('Cloud save geladen!', 'success', '☁️ Geladen');
+          }
+        } catch(e) { console.warn('Cloud save parse error:', e); }
+      }
+    })
+    .catch(e => console.warn('Firestore load error:', e));
+}
+
+function getAntiCheatPrestige() {
+  const playtimeHours = Math.max(1, gameState.totalPlayTime / 3600);
+  return Math.min(gameState.prestige, Math.floor(playtimeHours * 1000));
+}
+
+function updateLeaderboardEntry() {
+  if (!currentUser || !firebaseDb) return;
+  const playtimeHours = Math.max(0.01, gameState.totalPlayTime / 3600);
+  const safePrestige = getAntiCheatPrestige();
+  const entry = {
+    uid: currentUser.uid,
+    displayName: currentUser.displayName || gameState.playerName || 'Anoniem',
+    schoolClass: gameState.schoolClass || '',
+    prestige: safePrestige,
+    rep: Math.floor(gameState.rep),
+    playtime: Math.floor(gameState.totalPlayTime),
+    lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
+    photoURL: currentUser.photoURL || ''
+  };
+  firebaseDb.collection('leaderboard').doc(currentUser.uid).set(entry, { merge: true })
+    .catch(e => console.warn('Leaderboard update mislukt:', e));
+}
+
+function subscribeLeaderboard() {
+  if (!firebaseDb) return;
+  if (leaderboardUnsubscribe) leaderboardUnsubscribe();
+  leaderboardUnsubscribe = firebaseDb.collection('leaderboard')
+    .orderBy('rep', 'desc')
+    .limit(50)
+    .onSnapshot(snapshot => {
+      const entries = [];
+      snapshot.forEach(doc => entries.push({ id: doc.id, ...doc.data() }));
+      gameState.liveLeaderboard = entries;
+      if (currentTab === 'leaderboard') renderLeaderboard();
+    }, e => console.warn('Leaderboard listener error:', e));
+}
+
+window.addEventListener('beforeunload', () => {
+  if (currentUser && firebaseDb) syncToFirestore();
+  saveGame();
+});
+
 // ============================================================
 // GAME CONSTANTS
 // ============================================================
@@ -1290,26 +1641,12 @@ const ACHIEVEMENTS = [
     check: gs => gs.knowledge >= 1000 },
 ];
 
-const FAKE_PLAYERS = [
-  { id:'player_1', name:'Daan Vermeer', rep:8450, buildings:9, staff:7, prestige:1 },
-  { id:'player_2', name:'Emma Westerhof', rep:7200, buildings:8, staff:6, prestige:0 },
-  { id:'player_3', name:'Lars Kok', rep:6800, buildings:10, staff:5, prestige:1 },
-  { id:'player_4', name:'Sophie Hendriks', rep:5900, buildings:7, staff:8, prestige:0 },
-  { id:'player_5', name:'Tim de Boer', rep:5400, buildings:6, staff:4, prestige:0 },
-  { id:'player_6', name:'Julia Maas', rep:4800, buildings:8, staff:6, prestige:0 },
-  { id:'player_7', name:'Finn Kuipers', rep:4200, buildings:5, staff:3, prestige:0 },
-  { id:'player_8', name:'Nathalie Oost', rep:3700, buildings:7, staff:5, prestige:0 },
-  { id:'player_9', name:'Stijn Nieuwenhuis', rep:3200, buildings:4, staff:4, prestige:0 },
-  { id:'player_10', name:'Fleur van Leeuwen', rep:2900, buildings:6, staff:3, prestige:0 },
-  { id:'player_11', name:'Bram Dijkstra', rep:2400, buildings:5, staff:2, prestige:0 },
-  { id:'player_12', name:'Lena Peters', rep:2000, buildings:4, staff:3, prestige:0 },
-  { id:'player_13', name:'Max Gerritsen', rep:1700, buildings:3, staff:2, prestige:0 },
-  { id:'player_14', name:'Amy Huisman', rep:1400, buildings:3, staff:2, prestige:0 },
-  { id:'player_15', name:'Joost van der Laan', rep:1100, buildings:2, staff:1, prestige:0 },
-  { id:'player_16', name:'Roos Bergman', rep:850, buildings:2, staff:1, prestige:0 },
-  { id:'player_17', name:'Kevin Schut', rep:600, buildings:1, staff:1, prestige:0 },
-  { id:'player_18', name:'Merel Postma', rep:350, buildings:1, staff:0, prestige:0 },
-  { id:'player_19', name:'Jesse van Vliet', rep:150, buildings:1, staff:0, prestige:0 },
+// Demo entries shown when Firebase is not configured
+// These are clearly marked (demo) and not real players
+const DEMO_PLAYERS = [
+  { id:'demo_1', name:'Demo Speler 1 (demo)', rep:5000, buildings:8, staff:5, prestige:0, isDemo:true },
+  { id:'demo_2', name:'Demo Speler 2 (demo)', rep:3200, buildings:6, staff:4, prestige:0, isDemo:true },
+  { id:'demo_3', name:'Demo Speler 3 (demo)', rep:1800, buildings:4, staff:3, prestige:0, isDemo:true },
 ];
 
 const SPECIAL_UPGRADES = [
@@ -1364,7 +1701,10 @@ let gameState = {
   booster:0,
   tutorialStep:0,
   tutorialDone:false,
-  leaderboard: JSON.parse(JSON.stringify(FAKE_PLAYERS)),
+  leaderboard: [],
+  liveLeaderboard: null,
+  schoolClass: '',
+  discordUsername: '',
   tickCount:0,
   recentEventIds:[],
   sickTeacher:null,
@@ -1386,6 +1726,7 @@ let activeBuildingIndex = -1;
 // INIT
 // ============================================================
 function initGame() {
+  initFirebase();
   const saved = loadGame();
   if (saved && saved.playerName) {
     document.getElementById('welcome-modal').classList.add('hidden');
@@ -2105,7 +2446,10 @@ function loadGame() {
     const saved = JSON.parse(raw);
     // Merge with defaults for missing top-level fields
     const defaults = {
-      leaderboard: JSON.parse(JSON.stringify(FAKE_PLAYERS)),
+      leaderboard: [],
+      liveLeaderboard: null,
+      schoolClass: '',
+      discordUsername: '',
       achievementDates: {},
       disabledBuildings: {},
       raidCooldowns: {},
@@ -2153,14 +2497,12 @@ function resetGame() {
 }
 
 // ============================================================
-// LEADERBOARD SIMULATION
+// LEADERBOARD
 // ============================================================
 function simulateLeaderboardUpdate() {
-  const count = Math.floor(Math.random() * 3) + 2;
-  for (let i = 0; i < count; i++) {
-    const idx = Math.floor(Math.random() * gameState.leaderboard.length);
-    const delta = Math.floor(Math.random() * 250) - 50;
-    gameState.leaderboard[idx].rep = Math.max(0, gameState.leaderboard[idx].rep + delta);
+  // Only update live leaderboard from Firestore - no simulation of fake players
+  if (currentUser && firebaseDb && gameState.tickCount % 60 === 0) {
+    updateLeaderboardEntry();
   }
   if (currentTab === 'leaderboard') renderLeaderboard();
 }
@@ -2239,6 +2581,7 @@ function renderAll() {
   renderUpgrades();
   renderShop();
   renderSettings();
+  renderProfiel();
   updatePlayerBadge();
   updateNavBadges();
 }
@@ -2459,38 +2802,70 @@ function renderStaff() {
 function renderLeaderboard() {
   const container = document.getElementById('leaderboard-container');
   if (!container) return;
-  // Build combined list
+
+  const hasLiveData = gameState.liveLeaderboard && gameState.liveLeaderboard.length > 0;
+  const isFirebaseConfigured = firestoreConfigured;
+
   const playerEntry = {
-    id:'__player__',
-    name: gameState.playerName || 'Jij',
+    id: currentUser ? currentUser.uid : '__player__',
+    displayName: (currentUser ? currentUser.displayName : null) || gameState.playerName || 'Jij',
     rep: Math.floor(gameState.rep),
     buildings: gameState.buildings.length,
     staff: gameState.staff.length,
     prestige: gameState.prestige,
+    schoolClass: gameState.schoolClass || '',
     isPlayer: true,
   };
-  const allPlayers = [...gameState.leaderboard, playerEntry];
-  allPlayers.sort((a,b) => b.rep - a.rep);
-  const playerRank = allPlayers.findIndex(p => p.isPlayer) + 1;
-  let html = '<div style="margin-bottom:12px;font-size:14px;color:var(--text-secondary)">Jouw rang: <strong style="color:var(--accent)">#' + playerRank + '</strong> van ' + allPlayers.length + '</div>';
+
+  let allPlayers;
+  let statusBanner = '';
+
+  if (hasLiveData) {
+    allPlayers = [...gameState.liveLeaderboard];
+    const myIdx = allPlayers.findIndex(p => p.id === playerEntry.id);
+    if (myIdx >= 0) allPlayers[myIdx] = { ...allPlayers[myIdx], ...playerEntry };
+    else allPlayers.push(playerEntry);
+    allPlayers.sort((a,b) => b.rep - a.rep);
+    statusBanner = '<div style="background:rgba(52,199,89,0.1);border:1px solid rgba(52,199,89,0.3);border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--accent-green)">🟢 Live leaderboard — Echte Ichthus Tycoon spelers</div>';
+  } else if (!isFirebaseConfigured) {
+    statusBanner = '<div style="background:rgba(0,0,0,0.04);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px">' +
+      '<div style="font-size:14px;font-weight:700;margin-bottom:6px">🔒 Leaderboard is offline</div>' +
+      '<div style="font-size:13px;color:var(--text-secondary)">Configureer Firebase om je score op te slaan en met andere Ichthus-leerlingen te concurreren.</div>' +
+      '<a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm" style="display:inline-flex;margin-top:10px">🔥 Firebase instellen</a>' +
+      '</div>';
+    allPlayers = [playerEntry, ...DEMO_PLAYERS];
+    allPlayers.sort((a,b) => b.rep - a.rep);
+  } else {
+    statusBanner = '<div style="background:rgba(0,113,227,0.06);border:1px solid rgba(0,113,227,0.2);border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--primary)">🔵 Leaderboard ophalen... Log in om deel te nemen!</div>';
+    allPlayers = [playerEntry];
+  }
+
+  const playerRank = allPlayers.findIndex(p => p.isPlayer || p.id === playerEntry.id) + 1;
+  let html = statusBanner;
+  html += '<div style="margin-bottom:12px;font-size:14px;color:var(--text-secondary)">Jouw rang: <strong style="color:var(--primary)">#' + playerRank + '</strong> van ' + allPlayers.length + '</div>';
   html += '<div style="overflow-x:auto"><table class="lb-table"><thead><tr>';
-  html += '<th>#</th><th>Naam</th><th>REP</th><th>Gebouwen</th><th>Docenten</th><th>Prestige</th>';
+  html += '<th>#</th><th>Naam</th><th>Klas</th><th>REP</th><th>Gebouwen</th><th>Prestige</th>';
   html += '</tr></thead><tbody>';
+
   for (let i = 0; i < allPlayers.length; i++) {
     const p = allPlayers[i];
     const rank = i + 1;
+    const isPlayer = p.isPlayer || (currentUser && p.id === currentUser.uid);
+    const isDemo = p.isDemo;
     let rankBadge = '';
     if (rank === 1) rankBadge = '<span class="rank-badge rank-1">🥇</span>';
     else if (rank === 2) rankBadge = '<span class="rank-badge rank-2">🥈</span>';
     else if (rank === 3) rankBadge = '<span class="rank-badge rank-3">🥉</span>';
     else rankBadge = '<span class="rank-badge rank-other">' + rank + '</span>';
-    const isPlayer = p.isPlayer;
-    html += '<tr class="' + (isPlayer ? 'player-row' : '') + '">';
+    const name = p.displayName || p.name || 'Anoniem';
+    html += '<tr class="' + (isPlayer ? 'player-row' : '') + (isDemo ? ' demo-row' : '') + '">';
     html += '<td>' + rankBadge + '</td>';
-    html += '<td><div class="lb-name">' + escHtml(p.name) + (isPlayer ? '<span class="lb-you-badge">JIJ</span>' : '') + '</div></td>';
-    html += '<td><strong>' + Math.floor(p.rep).toLocaleString('nl-NL') + '</strong></td>';
+    const photoURL = sanitizeImageUrl(p.photoURL);
+    const avatar = photoURL ? '<img src="' + escHtml(photoURL) + '" style="width:22px;height:22px;border-radius:50%;vertical-align:middle;margin-right:6px" onerror="this.remove()">' : '';
+    html += '<td><div class="lb-name">' + avatar + escHtml(name) + (isPlayer ? '<span class="lb-you-badge">JIJ</span>' : '') + (isDemo ? '<span style="font-size:10px;color:var(--text-tertiary);margin-left:4px">(demo)</span>' : '') + '</div></td>';
+    html += '<td style="font-size:12px;color:var(--text-secondary)">' + escHtml(p.schoolClass || p.class || '—') + '</td>';
+    html += '<td><strong>' + Math.floor(p.rep || 0).toLocaleString('nl-NL') + '</strong></td>';
     html += '<td>' + (p.buildings || 0) + '</td>';
-    html += '<td>' + (p.staff || 0) + '</td>';
     html += '<td class="prestige-stars">' + (p.prestige > 0 ? '✨'.repeat(Math.min(p.prestige, 5)) : '—') + '</td>';
     html += '</tr>';
   }
@@ -2906,12 +3281,75 @@ function closeModal(id) {
 // ============================================================
 // NAVIGATION
 // ============================================================
+function renderProfiel() {
+  const container = document.getElementById('profiel-container');
+  if (!container) return;
+  const isLoggedIn = !!currentUser;
+  const displayName = (currentUser ? currentUser.displayName : null) || gameState.playerName || 'Anoniem';
+  const photoURL = currentUser ? currentUser.photoURL : null;
+  const totalTime = Math.floor(gameState.totalPlayTime / 60);
+
+  let html = '';
+  html += '<div class="card mb-16" style="text-align:center;padding:32px 24px">';
+  if (photoURL) {
+    html += '<img src="' + escHtml(photoURL) + '" style="width:80px;height:80px;border-radius:50%;margin-bottom:16px;border:3px solid var(--border)" onerror="this.style.display=\'none\'">';
+  } else {
+    html += '<div style="width:80px;height:80px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 16px">👤</div>';
+  }
+  html += '<div style="font-size:22px;font-weight:800;margin-bottom:4px">' + escHtml(displayName) + '</div>';
+  html += '<div style="font-size:14px;color:var(--text-secondary)">' + (gameState.schoolClass ? '🏫 ' + escHtml(gameState.schoolClass) : 'Geen klas ingesteld') + '</div>';
+  if (isLoggedIn) {
+    html += '<div style="font-size:12px;color:var(--accent-green);margin-top:8px">🟢 Ingelogd' + (currentUser.email ? ' als ' + escHtml(currentUser.email) : '') + '</div>';
+  } else {
+    html += '<div style="margin-top:12px"><button class="btn btn-primary btn-sm" onclick="openModal(\'login-modal\')">Inloggen voor leaderboard</button></div>';
+  }
+  html += '</div>';
+
+  html += '<div class="card mb-16"><div class="settings-section">';
+  html += '<div class="settings-section-title">Klas Instellen</div>';
+  html += '<div class="form-group"><label class="form-label">Klas:</label>';
+  html += '<select class="form-input" id="profiel-class-select" onchange="gameState.schoolClass=this.value;saveGame();showNotification(\'Klas opgeslagen!\',\'success\')">';
+  html += '<option value="">— Kies je klas —</option>';
+  const classes = ['1TM','2TM','3MAVO','3HAVO','3VWO','4MAVO','4HAVO','4VWO','5HAVO','5VWO','6VWO','Docent'];
+  for (const c of classes) {
+    html += '<option value="' + c + '"' + (gameState.schoolClass === c ? ' selected' : '') + '>' + c + '</option>';
+  }
+  html += '</select></div>';
+  html += '</div></div>';
+
+  html += '<div class="card mb-16"><div class="settings-section">';
+  html += '<div class="settings-section-title">Statistieken</div>';
+  html += '<div class="stats-grid">';
+  html += '<div class="stat-box"><span class="stat-box-val">' + totalTime + '</span><div class="stat-box-label">Minuten gespeeld</div></div>';
+  html += '<div class="stat-box"><span class="stat-box-val">' + Math.floor(gameState.totalCoinsEarned).toLocaleString('nl-NL') + '</span><div class="stat-box-label">Coins verdiend</div></div>';
+  html += '<div class="stat-box"><span class="stat-box-val">' + gameState.prestige + '</span><div class="stat-box-label">Prestige niveau</div></div>';
+  html += '<div class="stat-box"><span class="stat-box-val">' + gameState.achievements.length + '</span><div class="stat-box-label">Prestaties</div></div>';
+  html += '</div></div></div>';
+
+  html += '<div class="card"><div class="settings-section">';
+  html += '<div class="settings-section-title">Account Acties</div>';
+  html += '<div class="d-flex gap-12" style="flex-wrap:wrap">';
+  if (isLoggedIn) {
+    html += '<button class="btn btn-outline" onclick="logoutUser()">🚪 Uitloggen</button>';
+  } else {
+    html += '<button class="btn btn-primary" onclick="openModal(\'login-modal\')">🔐 Inloggen</button>';
+  }
+  html += '<button class="btn btn-danger" onclick="resetGame()">🗑️ Spel Resetten</button>';
+  html += '<button class="btn btn-ghost" onclick="gameState.tutorialDone=false;gameState.tutorialStep=0;showTutorial()">❓ Tutorial opnieuw</button>';
+  html += '</div></div></div>';
+
+  container.innerHTML = html;
+}
+
 function navigateTo(tab) {
+  // Allowlist of valid tab names to prevent CSS selector injection
+  const VALID_TABS = ['campus','docenten','upgrades','leaderboard','raids','quests','achievements','shop','settings','profiel'];
+  if (!VALID_TABS.includes(tab)) return;
   currentTab = tab;
   // Hide all tabs
   document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-  // Show target tab
-  const target = document.querySelector('[data-tab="' + tab + '"]');
+  // Show target tab — use find-by-dataset to avoid selector injection risk
+  const target = Array.from(document.querySelectorAll('.tab-content')).find(el => el.dataset.tab === tab);
   if (target) target.classList.add('active');
   // Update nav items
   document.querySelectorAll('.nav-item').forEach(el => {
@@ -2928,6 +3366,7 @@ function navigateTo(tab) {
     case 'upgrades': renderUpgrades(); break;
     case 'shop': renderShop(); break;
     case 'settings': renderSettings(); break;
+    case 'profiel': renderProfiel(); break;
   }
   // Close sidebar on mobile
   closeSidebar();
@@ -3051,59 +3490,104 @@ function updateQuoteBar() {
 }
 
 // ============================================================
-// TUTORIAL
+// TUTORIAL (7-step modal)
 // ============================================================
 const TUTORIAL_STEPS = [
   {
-    title: '👋 Welkom bij Ichthus Tycoon!',
-    text: 'Bouw de beste school van Nederland. Hier zie je al je resources: Coins, REP, Energie, Chaos en Kennis.',
-    top: '80px', left: '50%',
+    icon: '🏫',
+    title: 'Welkom bij Ichthus Tycoon!',
+    text: 'Jij bent de nieuwe Campus Manager van Ichthus Lyceum. Bouw de beste school van Nederland! Klik op "Volgende" om te beginnen.',
   },
   {
-    title: '🗺️ Navigatie',
-    text: 'Gebruik de zijbalk om tussen Campus, Docenten, Shop en meer te navigeren.',
-    top: '120px', left: '220px',
+    icon: '💰⭐⚡🔥📚',
+    title: 'Jouw Resources',
+    text: 'In de topbalk zie je je resources: Coins (💰), Reputatie (⭐), Energie (⚡), Chaos (🔥) en Kennis (📚). Houd je Chaos laag en bouw REP op!',
   },
   {
-    title: '🏗️ Campus bouwen',
-    text: 'Klik op een leeg vakje ("+") om een gebouw te bouwen. Begin met een Lokaal!',
-    top: '300px', left: '50%',
+    icon: '🏗️',
+    title: 'Campus bouwen',
+    text: 'Klik op een leeg veld (+) op het campus-raster om je eerste gebouw te plaatsen. Begin met een Lokaal! Elk gebouw produceert resources per seconde.',
   },
   {
-    title: '🎉 Klaar om te spelen!',
-    text: 'Je bent klaar! Bouw gebouwen, verzamel docenten, raid anderen en word de beste school!',
-    top: '50%', left: '50%',
+    icon: '👥',
+    title: 'Docenten',
+    text: 'Docenten geven je gebouwen grote bonussen. Koop je eerste docentenpakket in de Shop! Elke docent heeft een unieke perk.',
+  },
+  {
+    icon: '⚡',
+    title: 'Events & Chaos',
+    text: 'Random events zoals Toetsweek en WiFi Storing beïnvloeden je school. Houd Chaos onder controle — bij overflow verlies je REP!',
+  },
+  {
+    icon: '🏆',
+    title: 'Leaderboard',
+    text: 'Concurreer met andere Ichthus-leerlingen! Log in met Google of Microsoft om je score live op te slaan in het echte leaderboard.',
+  },
+  {
+    icon: '🚀',
+    title: 'Succes Campus Manager!',
+    text: 'Je speeltip: bouw eerst 3 Lokalen, dan een Kantine om Chaos te verlagen. Daarna een Mediatheek voor Kennis. Succes! 🎓',
   },
 ];
 
 function showTutorial() {
   if (gameState.tutorialDone) return;
   const overlay = document.getElementById('tutorial-overlay');
-  if (overlay) overlay.classList.remove('hidden');
+  if (overlay) {
+    overlay.classList.remove('hidden');
+    overlay.style.display = 'flex';
+  }
+  gameState.tutorialStep = 0;
   renderTutorialStep();
 }
 
 function renderTutorialStep() {
   const step = TUTORIAL_STEPS[gameState.tutorialStep];
   if (!step) { hideTutorial(); return; }
-  const box = document.getElementById('tutorial-box');
-  const title = document.getElementById('tutorial-title');
-  const text = document.getElementById('tutorial-text');
-  const stepEl = document.getElementById('tutorial-step');
-  if (box) {
-    box.style.top = step.top;
-    box.style.left = step.left;
-    box.style.transform = 'translateX(-50%)';
+
+  const iconEl = document.getElementById('tutorial-step-icon');
+  const titleEl = document.getElementById('tutorial-title');
+  const textEl = document.getElementById('tutorial-text');
+  const dotsEl = document.getElementById('tutorial-dots');
+  const prevBtn = document.getElementById('tutorial-prev-btn');
+  const nextBtn = document.getElementById('tutorial-next-btn');
+
+  if (iconEl) iconEl.textContent = step.icon;
+  if (titleEl) titleEl.textContent = step.title;
+  if (textEl) textEl.textContent = step.text;
+
+  if (dotsEl) {
+    let dotsHtml = '';
+    for (let i = 0; i < TUTORIAL_STEPS.length; i++) {
+      dotsHtml += '<div style="width:8px;height:8px;border-radius:50%;background:' + (i === gameState.tutorialStep ? 'var(--primary)' : 'var(--border)') + ';transition:var(--transition)"></div>';
+    }
+    dotsEl.innerHTML = dotsHtml;
   }
-  if (title) title.textContent = step.title;
-  if (text) text.textContent = step.text;
-  if (stepEl) stepEl.textContent = 'Stap ' + (gameState.tutorialStep+1) + ' / ' + TUTORIAL_STEPS.length;
+
+  if (prevBtn) prevBtn.style.visibility = gameState.tutorialStep === 0 ? 'hidden' : 'visible';
+  if (nextBtn) {
+    if (gameState.tutorialStep === TUTORIAL_STEPS.length - 1) {
+      nextBtn.textContent = 'Start spelen! 🚀';
+      nextBtn.style.background = 'var(--accent-green)';
+    } else {
+      nextBtn.textContent = 'Volgende →';
+      nextBtn.style.background = '';
+    }
+  }
+}
+
+function prevTutorialStep() {
+  if (gameState.tutorialStep > 0) {
+    gameState.tutorialStep--;
+    renderTutorialStep();
+  }
 }
 
 function nextTutorialStep() {
   gameState.tutorialStep++;
   if (gameState.tutorialStep >= TUTORIAL_STEPS.length) {
     hideTutorial();
+    spawnConfetti();
   } else {
     renderTutorialStep();
   }
@@ -3111,8 +3595,12 @@ function nextTutorialStep() {
 
 function hideTutorial() {
   gameState.tutorialDone = true;
+  saveGame();
   const overlay = document.getElementById('tutorial-overlay');
-  if (overlay) overlay.classList.add('hidden');
+  if (overlay) {
+    overlay.classList.add('hidden');
+    overlay.style.display = 'none';
+  }
 }
 
 // ============================================================
@@ -3174,6 +3662,16 @@ function capFirst(str) {
 
 function escHtml(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Only allow https:// URLs to prevent javascript: and data: protocol injection
+function sanitizeImageUrl(url) {
+  if (!url || typeof url !== 'string') return null;
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'https:') return null;
+    return url;
+  } catch(e) { return null; }
 }
 
 function fmt(n) {
