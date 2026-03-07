@@ -1274,6 +1274,7 @@ try {
     fbDb = firebase.firestore();
   }
 } catch(e) { console.warn('Firebase init failed (offline mode):', e); }
+// (FIREBASE_CONFIG is the canonical config constant)
 
 // ============================================================
 // GAME CONSTANTS
@@ -2326,6 +2327,18 @@ function loadGame() {
       if (saved.quests.lastReset === undefined) saved.quests.lastReset = Date.now();
     }
     Object.assign(gameState, saved);
+    // Migration: clear old fake player leaderboard data (player_1..player_19 IDs)
+    if (Array.isArray(gameState.leaderboard) && gameState.leaderboard.length > 0) {
+      const hasFakePlayers = gameState.leaderboard.some(p => /^player_\d+$/.test(p.id));
+      if (hasFakePlayers) {
+        gameState.leaderboard = [];
+        console.info('Migrated: cleared old fake leaderboard players');
+      }
+    }
+    // Migration: ensure npcRaidTargets exists
+    if (!Array.isArray(gameState.npcRaidTargets) || gameState.npcRaidTargets.length === 0) {
+      gameState.npcRaidTargets = JSON.parse(JSON.stringify(NPC_RAID_TARGETS));
+    }
     return saved;
   } catch(e) { console.warn('Load failed:', e); showNotification('Opgeslagen spel kon niet worden geladen. Nieuw spel gestart!', 'warning', 'Laden Mislukt'); return null; }
 }
@@ -2667,7 +2680,7 @@ function renderLeaderboard() {
     '<div style="font-size:48px;margin-bottom:12px">🏆</div>' +
     '<h3 style="font-size:18px;font-weight:800;margin-bottom:8px">Log in om mee te doen!</h3>' +
     '<p>Log in met Google of Microsoft om je score op te slaan en te concurreren met andere spelers van Ichthus Lyceum.</p>' +
-    '<button class="btn btn-accent" onclick="closeModal(\'login-modal\');openModal(\'login-modal\')">🔑 Inloggen</button>' +
+    '<button class="btn btn-accent" onclick="openModal(\'login-modal\')">🔑 Inloggen</button>' +
     '</div>';
 }
 
@@ -3121,12 +3134,12 @@ function closeModal(id) {
 // ============================================================
 const VALID_TABS = ['campus','docenten','upgrades','leaderboard','raids','quests','achievements','shop','settings'];
 function navigateTo(tab) {
-  if (!VALID_TABS.includes(tab)) return;
+  if (!VALID_TABS.includes(tab)) { console.warn('navigateTo: invalid tab', tab); return; }
   currentTab = tab;
   // Hide all tab-content panels
   document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-  // Show target tab-content
-  const target = Array.from(document.querySelectorAll('.tab-content')).find(el => el.dataset.tab === tab);
+  // Show target tab-content (use attribute selector directly for efficiency)
+  const target = document.querySelector('.tab-content[data-tab="' + tab + '"]');
   if (target) target.classList.add('active');
   // Update nav items
   document.querySelectorAll('.nav-item').forEach(el => {
@@ -3371,7 +3384,6 @@ function prevTutorialStep() {
 
 function hideTutorial() {
   gameState.tutorialDone = true;
-  localStorage.setItem('ichthus_tutorialDone', 'true');
   const overlay = document.getElementById('tutorial-overlay');
   if (overlay) overlay.classList.add('hidden');
   saveGame();
