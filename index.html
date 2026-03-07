@@ -13,37 +13,58 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics-compat.js"></script>
   <style>
 :root {
-  --primary: #003366;
+  --bg: #f5f5f7;
+  --bg-2: #ffffff;
+  --surface: rgba(255,255,255,0.85);
+  --surface-border: rgba(0,0,0,0.08);
+  --primary: #0071e3;
+  --primary-hover: #0077ed;
   --accent: #F0A500;
-  --success: #28a745;
-  --danger: #dc3545;
-  --bg: #f4f6f9;
-  --card-bg: #ffffff;
-  --text: #1a1a2e;
-  --text-secondary: #6c757d;
-  --border: #dee2e6;
-  --sidebar-width: 200px;
-  --header-height: 64px;
+  --accent-gold: #F0A500;
+  --success: #34c759;
+  --danger: #ff3b30;
+  --warning-color: #ff9f0a;
+  --text-primary: #1d1d1f;
+  --text: #1d1d1f;
+  --text-secondary: #6e6e73;
+  --text-tertiary: #aeaeb2;
+  --border: rgba(0,0,0,0.08);
+  --card-bg: rgba(255,255,255,0.85);
+  --accent-green: #34c759;
+  --accent-orange: #ff9f0a;
+  --accent-red: #ff3b30;
+  --accent-purple: #af52de;
+  --sidebar-width: 260px;
+  --header-height: 52px;
+  --radius-sm: 10px;
+  --radius: 16px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
   --shadow: 0 2px 8px rgba(0,0,0,0.08);
-  --shadow-lg: 0 8px 24px rgba(0,0,0,0.14);
-  --radius: 10px;
-  --radius-sm: 6px;
-  --transition: all 0.2s ease;
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-md: 0 8px 32px rgba(0,0,0,0.12);
+  --shadow-lg: 0 24px 80px rgba(0,0,0,0.16);
+  --transition: all 0.2s cubic-bezier(0.25,0.46,0.45,0.94);
 }
 [data-theme="dark"] {
-  --bg: #0d1117;
-  --card-bg: #161b22;
-  --text: #e6edf3;
-  --text-secondary: #8b949e;
-  --border: #30363d;
+  --bg: #000000;
+  --bg-2: #1c1c1e;
+  --surface: rgba(28,28,30,0.85);
+  --surface-border: rgba(255,255,255,0.1);
+  --text-primary: #f5f5f7;
+  --text: #f5f5f7;
+  --text-secondary: #aeaeb2;
+  --text-tertiary: #6e6e73;
+  --border: rgba(255,255,255,0.1);
+  --card-bg: rgba(28,28,30,0.85);
   --shadow: 0 2px 8px rgba(0,0,0,0.35);
-  --shadow-lg: 0 8px 24px rgba(0,0,0,0.5);
+  --shadow-lg: 0 24px 80px rgba(0,0,0,0.5);
 }
 /* === RESET === */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-size:16px;scroll-behavior:smooth}
-body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);transition:background 0.3s,color 0.3s;min-height:100vh;overflow-x:hidden}
-a{color:var(--accent);text-decoration:none}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text-primary);transition:background 0.3s,color 0.3s;min-height:100vh;overflow-x:hidden}
+a{color:var(--primary);text-decoration:none}
 ul{list-style:none}
 button{cursor:pointer;border:none;font-family:inherit}
 input{font-family:inherit}
@@ -59,65 +80,82 @@ img{max-width:100%}
 #header{
   position:fixed;top:0;left:0;right:0;
   height:var(--header-height);
-  background:var(--primary);
-  color:#fff;
+  background:rgba(255,255,255,0.85);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--surface-border);
+  color:var(--text-primary);
   display:flex;align-items:center;gap:12px;padding:0 16px;
   z-index:1000;
-  box-shadow:0 2px 12px rgba(0,0,0,0.25);
+  transition:background 0.3s;
 }
-#header .logo{display:flex;align-items:center;gap:10px;min-width:200px;text-decoration:none;color:#fff;cursor:pointer}
-#header .logo-title{font-weight:800;font-size:17px;letter-spacing:-0.3px;color:#fff}
-#header .logo-sub{font-size:10px;color:rgba(255,255,255,0.65);display:block;line-height:1}
-#resource-bar{display:flex;align-items:center;gap:10px;flex:1;overflow-x:auto;padding:0 8px;min-width:0}
+[data-theme="dark"] #header{background:rgba(0,0,0,0.85)}
+#header .logo{display:flex;align-items:center;gap:10px;min-width:200px;text-decoration:none;color:var(--text-primary);cursor:pointer}
+#header .logo-title{font-weight:700;font-size:16px;letter-spacing:-0.3px;color:var(--text-primary)}
+#header .logo-sub{font-size:10px;color:var(--text-secondary);display:block;line-height:1}
+#resource-bar{display:flex;align-items:center;gap:8px;flex:1;overflow-x:auto;padding:0 8px;min-width:0}
 #resource-bar::-webkit-scrollbar{height:3px}
-.resource-item{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.12);border-radius:20px;padding:4px 10px;white-space:nowrap;font-size:13px;font-weight:600;transition:var(--transition);flex-shrink:0}
-.resource-item:hover{background:rgba(255,255,255,0.2)}
-.resource-icon{font-size:14px}
-.resource-val{color:#fff}
-.resource-rate{color:rgba(255,255,255,0.6);font-size:11px;font-weight:400}
+.resource-item{display:flex;align-items:center;gap:5px;background:var(--surface);border:1px solid var(--surface-border);border-radius:980px;padding:5px 12px;white-space:nowrap;font-size:12px;font-weight:600;transition:var(--transition);flex-shrink:0;backdrop-filter:blur(10px)}
+.resource-item:hover{background:var(--bg-2);box-shadow:var(--shadow-sm)}
+.resource-icon{font-size:13px}
+.resource-val{color:var(--text-primary)}
+.resource-rate{color:var(--text-secondary);font-size:11px;font-weight:400}
 .header-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
-.player-badge{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,0.15);border-radius:20px;padding:5px 12px;font-size:13px;font-weight:600;color:#fff}
-.player-badge .prestige-star{color:var(--accent);font-size:12px}
-#dark-toggle{background:rgba(255,255,255,0.15);border:none;color:#fff;border-radius:50%;width:34px;height:34px;font-size:16px;display:flex;align-items:center;justify-content:center;transition:var(--transition);cursor:pointer}
-#dark-toggle:hover{background:rgba(255,255,255,0.28)}
-#mobile-menu-btn{display:none;background:rgba(255,255,255,0.15);border:none;color:#fff;border-radius:6px;width:36px;height:36px;font-size:20px;align-items:center;justify-content:center;cursor:pointer}
-#booster-indicator{background:var(--accent);color:#000;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700;display:none;animation:pulse 1s infinite}
-#shield-indicator{background:var(--success);color:#fff;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700;display:none;animation:pulse 1s infinite}
+.player-badge{display:flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--surface-border);border-radius:980px;padding:5px 12px;font-size:13px;font-weight:600;color:var(--text-primary)}
+.player-badge .prestige-star{color:var(--accent-gold);font-size:12px}
+#dark-toggle{background:var(--surface);border:1px solid var(--surface-border);color:var(--text-primary);border-radius:50%;width:34px;height:34px;font-size:16px;display:flex;align-items:center;justify-content:center;transition:var(--transition);cursor:pointer}
+#dark-toggle:hover{background:var(--bg-2);box-shadow:var(--shadow-sm)}
+#mobile-menu-btn{display:none;background:var(--surface);border:1px solid var(--surface-border);color:var(--text-primary);border-radius:var(--radius-sm);width:36px;height:36px;font-size:20px;align-items:center;justify-content:center;cursor:pointer}
+#booster-indicator{background:var(--accent-gold);color:#000;border-radius:980px;padding:4px 12px;font-size:12px;font-weight:700;display:none;animation:pulse 1s infinite}
+#shield-indicator{background:var(--accent-green);color:#fff;border-radius:980px;padding:4px 12px;font-size:12px;font-weight:700;display:none;animation:pulse 1s infinite}
+/* Auth area */
+#auth-area{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.auth-avatar{width:28px;height:28px;border-radius:50%;background:var(--primary);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+#auth-user-name{font-size:13px;font-weight:600;color:var(--text-primary);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 /* === SIDEBAR === */
 #sidebar{
   position:fixed;top:var(--header-height);left:0;
   width:var(--sidebar-width);
   height:calc(100vh - var(--header-height));
-  background:var(--card-bg);
-  border-right:1px solid var(--border);
+  background:var(--surface);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-right:1px solid var(--surface-border);
   overflow-y:auto;overflow-x:hidden;
   z-index:900;
   padding:12px 0 80px;
   transition:transform 0.3s ease;
+  display:flex;flex-direction:column;
 }
-.nav-section{padding:8px 12px 4px;font-size:10px;font-weight:700;color:var(--text-secondary);letter-spacing:0.8px;text-transform:uppercase;margin-top:4px}
+.nav-section{padding:8px 16px 4px;font-size:10px;font-weight:700;color:var(--text-secondary);letter-spacing:0.8px;text-transform:uppercase;margin-top:4px}
 .nav-item{
   display:flex;align-items:center;gap:10px;
   padding:10px 16px;
   font-size:14px;font-weight:500;
   color:var(--text-secondary);
   cursor:pointer;
-  border-radius:0;
+  border-radius:var(--radius-sm);
+  margin:1px 8px;
   transition:var(--transition);
   position:relative;
-  border-left:3px solid transparent;
+  border-left:none;
 }
-.nav-item:hover{color:var(--text);background:rgba(0,51,102,0.07)}
-.nav-item.active{color:var(--primary);background:rgba(0,51,102,0.1);border-left-color:var(--primary);font-weight:600}
-[data-theme="dark"] .nav-item.active{color:var(--accent);background:rgba(240,165,0,0.1);border-left-color:var(--accent)}
+.nav-item:hover{color:var(--text-primary);background:rgba(0,113,227,0.07)}
+.nav-item.active{color:var(--primary);background:rgba(0,113,227,0.1);font-weight:600}
+[data-theme="dark"] .nav-item:hover{background:rgba(255,255,255,0.07)}
+[data-theme="dark"] .nav-item.active{color:#409cff;background:rgba(64,156,255,0.1)}
 .nav-icon{font-size:16px;width:20px;text-align:center}
 .nav-badge{
   margin-left:auto;background:var(--danger);color:#fff;
-  border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;
+  border-radius:980px;padding:1px 7px;font-size:10px;font-weight:700;
   min-width:18px;text-align:center;
 }
-.nav-badge.gold{background:var(--accent);color:#000}
+.nav-badge.gold{background:var(--accent-gold);color:#000}
+/* Sidebar auth section */
+#sidebar-auth{margin-top:auto;padding:12px 16px;border-top:1px solid var(--surface-border)}
+.sidebar-auth-user{display:flex;align-items:center;gap:10px}
+.sidebar-avatar{width:36px;height:36px;border-radius:50%;background:var(--primary);color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sidebar-user-name{font-size:13px;font-weight:600;color:var(--text-primary);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sidebar-user-sub{font-size:11px;color:var(--text-secondary);margin-top:1px}
 
 /* === MAIN CONTENT === */
 #main{
@@ -130,22 +168,23 @@ img{max-width:100%}
 .tab-content{display:none}
 .tab-content.active{display:block;animation:fadeIn 0.2s ease}
 .page-header{margin-bottom:20px}
-.page-title{font-size:22px;font-weight:800;color:var(--text);margin-bottom:4px}
+.page-title{font-size:22px;font-weight:800;color:var(--text-primary);margin-bottom:4px}
 .page-subtitle{font-size:14px;color:var(--text-secondary)}
 
 /* === CARDS === */
 .card{
-  background:var(--card-bg);
-  border:1px solid var(--border);
-  border-radius:var(--radius);
+  background:var(--surface);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--surface-border);
+  border-radius:var(--radius-md);
   padding:18px;
-  box-shadow:var(--shadow);
+  box-shadow:var(--shadow-sm);
   transition:var(--transition);
 }
-.card:hover{box-shadow:var(--shadow-lg)}
+.card:hover{box-shadow:var(--shadow-md)}
 .card-title{
   font-size:14px;font-weight:700;
-  color:var(--text);
+  color:var(--text-primary);
   margin-bottom:14px;
   display:flex;align-items:center;gap:8px;
 }
@@ -162,7 +201,7 @@ img{max-width:100%}
 .campus-sidebar{}
 .campus-tile{
   aspect-ratio:1;
-  border:2px dashed var(--border);
+  border:2px dashed var(--surface-border);
   border-radius:var(--radius-sm);
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   cursor:pointer;
@@ -172,10 +211,10 @@ img{max-width:100%}
   background:var(--bg);
   min-height:70px;
 }
-.campus-tile:hover{border-color:var(--accent);background:rgba(240,165,0,0.07);transform:scale(1.04)}
+.campus-tile:hover{border-color:var(--accent-gold);background:rgba(240,165,0,0.07);transform:scale(1.04)}
 .campus-tile.occupied{
-  border:2px solid var(--border);
-  background:var(--card-bg);
+  border:2px solid var(--surface-border);
+  background:var(--surface);
   cursor:pointer;
 }
 .campus-tile.occupied:hover{border-color:var(--primary);transform:scale(1.06);z-index:10}
@@ -183,7 +222,7 @@ img{max-width:100%}
 .campus-tile .tile-emoji{font-size:26px;line-height:1;margin-bottom:2px}
 .campus-tile .tile-level{
   position:absolute;bottom:3px;right:4px;
-  background:var(--accent);color:#000;
+  background:var(--accent-gold);color:#000;
   font-size:9px;font-weight:800;
   border-radius:4px;padding:1px 4px;
 }
@@ -197,8 +236,8 @@ img{max-width:100%}
   position:absolute;top:3px;right:3px;
   font-size:11px;
 }
-.campus-tile .tile-plus{font-size:20px;color:var(--border);transition:var(--transition)}
-.campus-tile:hover .tile-plus{color:var(--accent)}
+.campus-tile .tile-plus{font-size:20px;color:var(--surface-border);transition:var(--transition)}
+.campus-tile:hover .tile-plus{color:var(--accent-gold)}
 .campus-tile .tile-tooltip{
   position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);
   background:rgba(0,0,0,0.85);color:#fff;
@@ -212,7 +251,7 @@ img{max-width:100%}
 .prod-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
 .prod-item{display:flex;align-items:center;gap:8px;font-size:13px;padding:6px 10px;background:var(--bg);border-radius:var(--radius-sm)}
 .prod-item .prod-icon{font-size:16px}
-.prod-item .prod-val{font-weight:700;color:var(--text)}
+.prod-item .prod-val{font-weight:700;color:var(--text-primary)}
 .prod-item .prod-label{color:var(--text-secondary);font-size:12px}
 .prod-item .prod-rate{margin-left:auto;font-size:11px;color:var(--text-secondary)}
 
@@ -220,24 +259,25 @@ img{max-width:100%}
 .active-events-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;min-height:0}
 .event-pill{
   display:inline-flex;align-items:center;gap:5px;
-  background:rgba(240,165,0,0.15);color:var(--accent);
-  border:1px solid var(--accent);border-radius:20px;
+  background:rgba(240,165,0,0.15);color:var(--accent-gold);
+  border:1px solid var(--accent-gold);border-radius:20px;
   padding:4px 12px;font-size:12px;font-weight:600;
   animation:pulse 2s infinite;
 }
-.event-pill.danger{background:rgba(220,53,69,0.12);color:var(--danger);border-color:var(--danger)}
+.event-pill.danger{background:rgba(255,59,48,0.12);color:var(--accent-red);border-color:var(--accent-red)}
 
 /* === TEACHER CARDS === */
 .staff-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px}
 .teacher-card{
-  background:var(--card-bg);
-  border:2px solid var(--border);
-  border-radius:var(--radius);
+  background:var(--surface);
+  backdrop-filter:blur(20px);
+  border:2px solid var(--surface-border);
+  border-radius:var(--radius-md);
   padding:16px;
   position:relative;overflow:hidden;
   transition:var(--transition);
 }
-.teacher-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.teacher-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
 .teacher-card.rarity-common{border-color:#9e9e9e}
 .teacher-card.rarity-rare{border-color:#2196F3;box-shadow:0 0 8px rgba(33,150,243,0.2)}
 .teacher-card.rarity-epic{border-color:#9C27B0;box-shadow:0 0 8px rgba(156,39,176,0.2)}
@@ -245,10 +285,10 @@ img{max-width:100%}
 .teacher-card.sick{opacity:0.6;filter:grayscale(0.5)}
 .teacher-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
 .teacher-emoji{font-size:36px;line-height:1}
-.teacher-name{font-size:15px;font-weight:700;color:var(--text)}
+.teacher-name{font-size:15px;font-weight:700;color:var(--text-primary)}
 .teacher-subject{font-size:12px;color:var(--text-secondary);margin-top:2px}
 .rarity-badge{
-  display:inline-block;border-radius:10px;padding:2px 9px;
+  display:inline-block;border-radius:980px;padding:2px 9px;
   font-size:10px;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;
 }
 .rarity-badge.common{background:#e0e0e0;color:#555}
@@ -261,72 +301,73 @@ img{max-width:100%}
 .teacher-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0}
 .stat-row{display:flex;justify-content:space-between;align-items:center;font-size:12px}
 .stat-label{color:var(--text-secondary)}
-.stat-bar{height:4px;border-radius:2px;background:var(--border);flex:1;margin:0 8px;overflow:hidden}
-.stat-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--primary),var(--accent))}
+.stat-bar{height:4px;border-radius:2px;background:var(--surface-border);flex:1;margin:0 8px;overflow:hidden}
+.stat-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--primary),var(--accent-gold))}
 .stat-val{font-weight:700;font-size:11px;min-width:16px;text-align:right}
 .teacher-perk{
   background:rgba(240,165,0,0.1);
   border:1px solid rgba(240,165,0,0.35);
   border-radius:var(--radius-sm);padding:8px 10px;
-  font-size:12px;margin:8px 0;color:var(--text);
+  font-size:12px;margin:8px 0;color:var(--text-primary);
 }
-.teacher-perk strong{color:var(--accent);font-size:11px;display:block;margin-bottom:2px}
+.teacher-perk strong{color:var(--accent-gold);font-size:11px;display:block;margin-bottom:2px}
 .teacher-quote{
   font-size:11px;color:var(--text-secondary);font-style:italic;
-  border-left:3px solid var(--accent);padding-left:8px;margin:8px 0;
+  border-left:3px solid var(--accent-gold);padding-left:8px;margin:8px 0;
 }
 .teacher-assign{margin-top:10px}
 .teacher-assign label{font-size:11px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:4px}
 .assign-select{
   width:100%;padding:6px 10px;border-radius:var(--radius-sm);
-  border:1px solid var(--border);background:var(--bg);color:var(--text);
+  border:1px solid var(--surface-border);background:var(--bg);color:var(--text-primary);
   font-family:inherit;font-size:12px;cursor:pointer;
 }
-.assign-select:focus{outline:none;border-color:var(--accent)}
+.assign-select:focus{outline:none;border-color:var(--primary)}
 
 /* === BUTTONS === */
 .btn{
   display:inline-flex;align-items:center;justify-content:center;gap:7px;
-  padding:9px 18px;border-radius:var(--radius-sm);
+  padding:9px 20px;border-radius:980px;
   font-size:14px;font-weight:600;
   transition:var(--transition);cursor:pointer;border:none;
   line-height:1;white-space:nowrap;
 }
+.btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:var(--shadow-md)}
 .btn:active{transform:scale(0.97)}
-.btn:disabled{opacity:0.5;cursor:not-allowed;transform:none!important}
-.btn-sm{padding:6px 12px;font-size:12px}
-.btn-lg{padding:12px 28px;font-size:16px}
+.btn:disabled{opacity:0.5;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+.btn-sm{padding:6px 14px;font-size:12px}
+.btn-lg{padding:14px 32px;font-size:16px}
 .btn-primary{background:var(--primary);color:#fff}
-.btn-primary:hover:not(:disabled){background:#00245a}
-.btn-accent{background:var(--accent);color:#000}
+.btn-primary:hover:not(:disabled){background:var(--primary-hover)}
+.btn-accent{background:var(--accent-gold);color:#000}
 .btn-accent:hover:not(:disabled){background:#e09600}
-.btn-success{background:var(--success);color:#fff}
-.btn-success:hover:not(:disabled){background:#218838}
-.btn-danger{background:var(--danger);color:#fff}
-.btn-danger:hover:not(:disabled){background:#c82333}
-.btn-outline{background:transparent;color:var(--text);border:1.5px solid var(--border)}
-.btn-outline:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.btn-success{background:var(--accent-green);color:#fff}
+.btn-success:hover:not(:disabled){background:#28a745}
+.btn-danger{background:var(--accent-red);color:#fff}
+.btn-danger:hover:not(:disabled){background:#d32f2f}
+.btn-outline{background:transparent;color:var(--text-primary);border:1.5px solid var(--surface-border)}
+.btn-outline:hover:not(:disabled){border-color:var(--primary);color:var(--primary)}
 .btn-ghost{background:transparent;color:var(--text-secondary)}
-.btn-ghost:hover:not(:disabled){background:var(--bg);color:var(--text)}
+.btn-ghost:hover:not(:disabled){background:var(--bg);color:var(--text-primary)}
 .w-full{width:100%}
 
 /* === PROGRESS BARS === */
-.progress-bar-wrap{background:var(--border);border-radius:20px;height:8px;overflow:hidden;margin:4px 0}
+.progress-bar-wrap{background:var(--surface-border);border-radius:20px;height:8px;overflow:hidden;margin:4px 0}
 .progress-bar{height:100%;border-radius:20px;transition:width 0.5s ease;min-width:4px}
-.progress-bar.coins{background:linear-gradient(90deg,#F0A500,#FFD700)}
-.progress-bar.rep{background:linear-gradient(90deg,#003366,#2196F3)}
-.progress-bar.energy{background:linear-gradient(90deg,#28a745,#5cb85c)}
-.progress-bar.chaos{background:linear-gradient(90deg,#dc3545,#ff6b6b)}
-.progress-bar.knowledge{background:linear-gradient(90deg,#9C27B0,#E040FB)}
+.progress-bar.coins{background:linear-gradient(90deg,var(--accent-gold),#FFD700)}
+.progress-bar.rep{background:linear-gradient(90deg,var(--primary),#409cff)}
+.progress-bar.energy{background:linear-gradient(90deg,var(--accent-green),#5cb85c)}
+.progress-bar.chaos{background:linear-gradient(90deg,var(--accent-red),#ff6b6b)}
+.progress-bar.knowledge{background:linear-gradient(90deg,var(--accent-purple),#E040FB)}
 
 /* === LEADERBOARD === */
 #leaderboard-container .lb-table{width:100%;border-collapse:collapse;font-size:14px}
-.lb-table th{padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid var(--border)}
-.lb-table td{padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+.lb-table th{padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid var(--surface-border)}
+.lb-table td{padding:12px 14px;border-bottom:1px solid var(--surface-border);vertical-align:middle}
 .lb-table tr:last-child td{border-bottom:none}
-.lb-table tr:hover td{background:rgba(240,165,0,0.05)}
+.lb-table tr:hover td{background:rgba(0,113,227,0.04)}
 .player-row td{background:rgba(240,165,0,0.1)!important;font-weight:700}
-.player-row td:first-child{border-left:3px solid var(--accent)}
+.player-row td:first-child{border-left:3px solid var(--accent-gold)}
 .rank-badge{
   display:inline-flex;align-items:center;justify-content:center;
   width:28px;height:28px;border-radius:50%;font-weight:800;font-size:13px;
@@ -334,98 +375,107 @@ img{max-width:100%}
 .rank-1{background:#FFD700;color:#000}
 .rank-2{background:#C0C0C0;color:#000}
 .rank-3{background:#CD7F32;color:#fff}
-.rank-other{background:var(--border);color:var(--text-secondary)}
-.prestige-stars{color:var(--accent);font-size:12px;letter-spacing:1px}
+.rank-other{background:var(--surface-border);color:var(--text-secondary)}
+.prestige-stars{color:var(--accent-gold);font-size:12px;letter-spacing:1px}
 .lb-name{font-weight:600;display:flex;align-items:center;gap:6px}
-.lb-you-badge{background:var(--accent);color:#000;font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px}
+.lb-you-badge{background:var(--accent-gold);color:#000;font-size:10px;font-weight:700;padding:1px 7px;border-radius:980px}
+.lb-login-prompt{background:linear-gradient(135deg,var(--primary),#0056b3);color:#fff;border-radius:var(--radius-md);padding:24px;text-align:center;margin-bottom:16px}
+.lb-login-prompt p{margin-bottom:16px;font-size:14px;opacity:0.9}
 
 /* === RAID LOG === */
 .raid-log-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px}
-.raid-log-table th{padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;border-bottom:2px solid var(--border)}
-.raid-log-table td{padding:10px 12px;border-bottom:1px solid var(--border)}
-.raid-success td:first-child{border-left:3px solid var(--success)}
-.raid-fail td:first-child{border-left:3px solid var(--danger)}
-.raid-defended td:first-child{border-left:3px solid var(--accent)}
+.raid-log-table th{padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;border-bottom:2px solid var(--surface-border)}
+.raid-log-table td{padding:10px 12px;border-bottom:1px solid var(--surface-border)}
+.raid-success td:first-child{border-left:3px solid var(--accent-green)}
+.raid-fail td:first-child{border-left:3px solid var(--accent-red)}
+.raid-defended td:first-child{border-left:3px solid var(--accent-gold)}
 .raid-targets-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:10px}
 .raid-target-card{
-  background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);
+  background:var(--bg);border:1px solid var(--surface-border);border-radius:var(--radius-sm);
   padding:14px;transition:var(--transition);
 }
 .raid-target-card:hover{border-color:var(--primary);transform:translateY(-1px)}
 .raid-target-name{font-weight:700;font-size:14px;margin-bottom:6px}
 .raid-target-stats{font-size:12px;color:var(--text-secondary);margin-bottom:10px}
-.raid-cooldown{font-size:11px;color:var(--danger);font-weight:600;margin-top:6px}
+.raid-cooldown{font-size:11px;color:var(--accent-red);font-weight:600;margin-top:6px}
 
 /* === QUEST CARDS === */
 .quests-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
 .quest-card{
-  background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);
+  background:var(--surface);border:1px solid var(--surface-border);border-radius:var(--radius-md);
   padding:16px;position:relative;overflow:hidden;transition:var(--transition);
+  backdrop-filter:blur(10px);
 }
-.quest-card:hover{box-shadow:var(--shadow-lg)}
-.quest-card.completed{border-color:var(--success);background:rgba(40,167,69,0.06)}
-.quest-card.completed::after{content:"✓";position:absolute;top:10px;right:12px;color:var(--success);font-size:20px;font-weight:800}
+.quest-card:hover{box-shadow:var(--shadow-md)}
+.quest-card.completed{border-color:var(--accent-green);background:rgba(52,199,89,0.06)}
+.quest-card.completed::after{content:"✓";position:absolute;top:10px;right:12px;color:var(--accent-green);font-size:20px;font-weight:800}
 .quest-name{font-weight:700;font-size:14px;margin-bottom:4px}
 .quest-desc{font-size:12px;color:var(--text-secondary);margin-bottom:10px}
 .quest-progress-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
 .quest-progress-text{font-size:12px;font-weight:600;color:var(--text-secondary)}
-.quest-reward{font-size:12px;color:var(--accent);font-weight:700}
+.quest-reward{font-size:12px;color:var(--accent-gold);font-weight:700}
 .quest-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
 
 /* === ACHIEVEMENTS === */
 .achievements-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
 .achievement-badge{
-  background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);
+  background:var(--surface);border:1px solid var(--surface-border);border-radius:var(--radius-md);
   padding:16px;text-align:center;transition:var(--transition);position:relative;
+  backdrop-filter:blur(10px);
 }
-.achievement-badge.unlocked{border-color:var(--accent);background:rgba(240,165,0,0.06)}
-.achievement-badge.unlocked:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);animation:achievementPop 0.3s ease}
+.achievement-badge.unlocked{border-color:var(--accent-gold);background:rgba(240,165,0,0.06)}
+.achievement-badge.unlocked:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);animation:achievementPop 0.3s ease}
 .achievement-badge.locked{opacity:0.45;filter:grayscale(0.7)}
 .achievement-emoji{font-size:34px;margin-bottom:8px;display:block}
 .achievement-name{font-weight:700;font-size:13px;margin-bottom:4px}
 .achievement-desc{font-size:11px;color:var(--text-secondary)}
-.achievement-date{font-size:10px;color:var(--accent);margin-top:6px;font-weight:600}
+.achievement-date{font-size:10px;color:var(--accent-gold);margin-top:6px;font-weight:600}
 
 /* === SHOP === */
 .shop-packs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-bottom:24px}
 .pack-card{
-  background:var(--card-bg);border:2px solid var(--border);border-radius:var(--radius);
+  background:var(--surface);border:2px solid var(--surface-border);border-radius:var(--radius-md);
   padding:20px;text-align:center;transition:var(--transition);cursor:pointer;
+  backdrop-filter:blur(10px);
 }
-.pack-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+.pack-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md)}
 .pack-card.pack-common{border-color:#9e9e9e}
 .pack-card.pack-deluxe{border-color:#2196F3;box-shadow:0 0 12px rgba(33,150,243,0.15)}
 .pack-card.pack-legendary{border-color:#FFD700;box-shadow:0 0 16px rgba(255,215,0,0.25);animation:glow 2s infinite}
 .pack-emoji{font-size:48px;display:block;margin-bottom:12px}
 .pack-name{font-size:16px;font-weight:800;margin-bottom:6px}
-.pack-price{font-size:20px;font-weight:800;color:var(--accent);margin:10px 0}
+.pack-price{font-size:20px;font-weight:800;color:var(--accent-gold);margin:10px 0}
 .pack-odds{font-size:11px;color:var(--text-secondary);line-height:1.6;margin-bottom:14px}
 .pack-odds span{display:block}
 .upgrade-cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
 .upgrade-card{
-  background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);
+  background:var(--surface);border:1px solid var(--surface-border);border-radius:var(--radius-md);
   padding:16px;display:flex;align-items:flex-start;gap:14px;transition:var(--transition);
+  backdrop-filter:blur(10px);
 }
-.upgrade-card:hover{box-shadow:var(--shadow-lg)}
-.upgrade-card.owned{border-color:var(--success);background:rgba(40,167,69,0.05)}
+.upgrade-card:hover{box-shadow:var(--shadow-md)}
+.upgrade-card.owned{border-color:var(--accent-green);background:rgba(52,199,89,0.05)}
 .upgrade-emoji{font-size:30px;flex-shrink:0}
 .upgrade-info{flex:1}
 .upgrade-name{font-weight:700;font-size:14px;margin-bottom:4px}
 .upgrade-desc{font-size:12px;color:var(--text-secondary);margin-bottom:8px}
 .upgrade-reqs{font-size:11px;color:var(--text-secondary);margin-bottom:6px}
-.upgrade-owned-badge{background:var(--success);color:#fff;font-size:10px;font-weight:700;padding:2px 9px;border-radius:10px}
+.upgrade-owned-badge{background:var(--accent-green);color:#fff;font-size:10px;font-weight:700;padding:2px 9px;border-radius:980px}
 
 /* === MODALS === */
 .modal-overlay{
-  position:fixed;inset:0;background:rgba(0,0,0,0.6);
+  position:fixed;inset:0;background:rgba(0,0,0,0.5);
   display:flex;align-items:center;justify-content:center;
   z-index:2000;padding:16px;
   animation:fadeIn 0.15s ease;
-  backdrop-filter:blur(2px);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
 }
 .modal-overlay.hidden{display:none!important}
 .modal{
-  background:var(--card-bg);border-radius:var(--radius);
+  background:var(--surface);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--surface-border);
+  border-radius:var(--radius-lg);
   padding:24px;max-width:560px;width:100%;
   max-height:90vh;overflow-y:auto;
   box-shadow:var(--shadow-lg);
@@ -435,21 +485,22 @@ img{max-width:100%}
 .modal-sm{max-width:400px}
 .modal-lg{max-width:760px}
 .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
-.modal-title{font-size:18px;font-weight:800;color:var(--text)}
-.modal-close{background:none;border:none;font-size:22px;color:var(--text-secondary);cursor:pointer;padding:4px;border-radius:4px;line-height:1}
-.modal-close:hover{color:var(--text);background:var(--bg)}
-.modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)}
+.modal-title{font-size:18px;font-weight:800;color:var(--text-primary)}
+.modal-close{background:none;border:none;font-size:22px;color:var(--text-secondary);cursor:pointer;padding:4px;border-radius:50%;line-height:1;width:32px;height:32px;display:flex;align-items:center;justify-content:center}
+.modal-close:hover{color:var(--text-primary);background:var(--bg)}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid var(--surface-border)}
 .building-grid-modal{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .building-option{
-  border:2px solid var(--border);border-radius:var(--radius-sm);padding:14px;
+  border:2px solid var(--surface-border);border-radius:var(--radius-sm);padding:14px;
   cursor:pointer;transition:var(--transition);text-align:center;
   display:flex;flex-direction:column;align-items:center;gap:6px;
+  background:var(--surface);
 }
-.building-option:hover:not(.disabled){border-color:var(--accent);background:rgba(240,165,0,0.07);transform:scale(1.02)}
+.building-option:hover:not(.disabled){border-color:var(--accent-gold);background:rgba(240,165,0,0.07);transform:scale(1.02)}
 .building-option.disabled{opacity:0.4;cursor:not-allowed}
 .building-option-emoji{font-size:30px}
 .building-option-name{font-weight:700;font-size:13px}
-.building-option-cost{font-size:12px;color:var(--accent);font-weight:700}
+.building-option-cost{font-size:12px;color:var(--accent-gold);font-weight:700}
 .building-option-prod{font-size:11px;color:var(--text-secondary);text-align:center}
 
 /* === TEACHER REVEAL MODAL === */
@@ -466,36 +517,39 @@ img{max-width:100%}
 .reveal-subject{font-size:14px;color:var(--text-secondary);margin-bottom:12px}
 .reveal-perk{
   background:rgba(0,0,0,0.07);border-radius:var(--radius-sm);padding:10px 14px;
-  font-size:13px;margin:14px 0;color:var(--text);
+  font-size:13px;margin:14px 0;color:var(--text-primary);
 }
 
-/* === BUILDING INFO MODAL === */
-.level-stars{color:var(--accent);font-size:18px;letter-spacing:2px}
+/* === TEACHER REVEAL MODAL === */
+.level-stars{color:var(--accent-gold);font-size:18px;letter-spacing:2px}
 .binfo-prod-table{width:100%;font-size:13px;border-collapse:collapse;margin:8px 0}
-.binfo-prod-table td{padding:5px 10px;border-bottom:1px solid var(--border)}
+.binfo-prod-table td{padding:5px 10px;border-bottom:1px solid var(--surface-border)}
 .binfo-prod-table tr:last-child td{border-bottom:none}
 
 /* === NOTIFICATIONS === */
 #notifications{
-  position:fixed;top:80px;right:16px;z-index:5000;
+  position:fixed;top:68px;right:16px;z-index:5000;
   display:flex;flex-direction:column;gap:8px;
   max-width:320px;min-width:260px;
 }
 .notification{
-  background:var(--card-bg);border-radius:var(--radius);
-  padding:12px 16px;box-shadow:var(--shadow-lg);
-  border-left:4px solid var(--success);
+  background:var(--surface);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--surface-border);
+  border-radius:var(--radius-md);
+  padding:12px 16px;box-shadow:var(--shadow-md);
+  border-left:4px solid var(--accent-green);
   font-size:13px;font-weight:500;
   animation:notifSlideIn 0.25s ease;
   display:flex;align-items:flex-start;gap:10px;
   position:relative;overflow:hidden;
 }
-.notification.error{border-left-color:var(--danger)}
-.notification.warning{border-left-color:var(--accent)}
-.notification.info{border-left-color:#2196F3}
+.notification.error{border-left-color:var(--accent-red)}
+.notification.warning{border-left-color:var(--accent-gold)}
+.notification.info{border-left-color:var(--primary)}
 .notif-icon{font-size:18px;flex-shrink:0}
 .notif-body{flex:1}
-.notif-title{font-weight:700;font-size:12px;color:var(--text);margin-bottom:2px}
+.notif-title{font-weight:700;font-size:12px;color:var(--text-primary);margin-bottom:2px}
 .notif-msg{color:var(--text-secondary);font-size:12px}
 .notif-dismiss{
   background:none;border:none;cursor:pointer;
@@ -504,11 +558,11 @@ img{max-width:100%}
 .notification.fade-out{animation:notifSlideOut 0.25s ease forwards}
 .notif-progress{
   position:absolute;bottom:0;left:0;height:2px;
-  background:var(--success);animation:notifProgress 3s linear forwards;
+  background:var(--accent-green);animation:notifProgress 3s linear forwards;
 }
-.notification.error .notif-progress{background:var(--danger)}
-.notification.warning .notif-progress{background:var(--accent)}
-.notification.info .notif-progress{background:#2196F3}
+.notification.error .notif-progress{background:var(--accent-red)}
+.notification.warning .notif-progress{background:var(--accent-gold)}
+.notification.info .notif-progress{background:var(--primary)}
 
 /* === CONFETTI === */
 #confetti-container{position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden}
@@ -518,30 +572,54 @@ img{max-width:100%}
   animation:confettiFall linear forwards;
 }
 
-/* === TUTORIAL === */
+/* === TUTORIAL MODAL (7-step) === */
 #tutorial-overlay{
-  position:fixed;inset:0;z-index:4000;pointer-events:none;
-  background:rgba(0,0,0,0.45);
+  position:fixed;inset:0;z-index:4000;
+  background:rgba(0,0,0,0.55);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  display:flex;align-items:center;justify-content:center;
+  padding:16px;
 }
-#tutorial-overlay:not(.hidden){pointer-events:all}
-.tutorial-box{
-  position:absolute;
-  background:var(--card-bg);border-radius:var(--radius);
-  padding:18px 22px;max-width:300px;
-  box-shadow:var(--shadow-lg);border-left:4px solid var(--accent);
-  animation:slideIn 0.3s ease;
+#tutorial-overlay.hidden{display:none!important}
+.tutorial-modal{
+  background:var(--surface);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--surface-border);
+  border-radius:var(--radius-lg);
+  padding:32px 28px 24px;
+  max-width:480px;width:100%;
+  box-shadow:var(--shadow-lg);
+  animation:slideIn 0.25s ease;
+  position:relative;
+  text-align:center;
 }
-.tutorial-title{font-weight:800;font-size:15px;margin-bottom:6px;color:var(--text)}
-.tutorial-text{font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:14px}
-.tutorial-actions{display:flex;justify-content:space-between;align-items:center}
-.tutorial-step{font-size:11px;color:var(--text-secondary)}
+.tutorial-skip{
+  position:absolute;top:16px;right:16px;
+  background:none;border:none;cursor:pointer;
+  font-size:12px;color:var(--text-secondary);
+  padding:4px 8px;border-radius:980px;
+}
+.tutorial-skip:hover{background:var(--bg);color:var(--text-primary)}
+.tutorial-step-emoji{font-size:56px;margin-bottom:16px;display:block;animation:bounceIn 0.4s ease}
+.tutorial-step-title{font-size:22px;font-weight:800;color:var(--text-primary);margin-bottom:10px}
+.tutorial-step-text{font-size:14px;color:var(--text-secondary);line-height:1.6;margin-bottom:24px}
+.tutorial-dots{display:flex;justify-content:center;gap:6px;margin-bottom:20px}
+.tutorial-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--surface-border);transition:var(--transition);
+}
+.tutorial-dot.active{width:20px;border-radius:4px;background:var(--primary)}
+.tutorial-nav{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.tutorial-step-info{font-size:12px;color:var(--text-secondary)}
 
 /* === QUOTE BAR === */
 #quote-bar{
   position:fixed;bottom:0;left:var(--sidebar-width);right:0;
-  background:var(--primary);color:rgba(255,255,255,0.8);
+  background:var(--surface);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-top:1px solid var(--surface-border);
+  color:var(--text-secondary);
   padding:8px 20px;font-size:12px;z-index:800;
-  border-top:1px solid rgba(255,255,255,0.1);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   font-style:italic;
 }
@@ -549,9 +627,9 @@ img{max-width:100%}
 /* === PRESTIGE === */
 .prestige-banner{
   background:linear-gradient(135deg,var(--primary),#1a237e);
-  border-radius:var(--radius);padding:20px;margin-bottom:16px;
+  border-radius:var(--radius-md);padding:20px;margin-bottom:16px;
   color:#fff;display:flex;align-items:center;gap:16px;
-  box-shadow:var(--shadow-lg);
+  box-shadow:var(--shadow-md);
 }
 .prestige-stars{font-size:24px;letter-spacing:2px}
 .prestige-info{flex:1}
@@ -560,45 +638,45 @@ img{max-width:100%}
 
 /* === SETTINGS === */
 .settings-section{margin-bottom:24px}
-.settings-section-title{font-size:14px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border)}
-.settings-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)}
+.settings-section-title{font-size:14px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--surface-border)}
+.settings-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--surface-border)}
 .settings-row:last-child{border-bottom:none}
-.settings-label{font-size:14px;font-weight:600;color:var(--text)}
+.settings-label{font-size:14px;font-weight:600;color:var(--text-primary)}
 .settings-sub{font-size:12px;color:var(--text-secondary);margin-top:2px}
 .toggle-switch{position:relative;width:44px;height:24px;cursor:pointer}
 .toggle-switch input{opacity:0;width:0;height:0}
 .toggle-slider{
-  position:absolute;inset:0;background:var(--border);border-radius:24px;
+  position:absolute;inset:0;background:var(--surface-border);border-radius:24px;
   transition:var(--transition);
 }
 .toggle-slider::before{
   content:"";position:absolute;width:18px;height:18px;border-radius:50%;
   left:3px;top:3px;background:#fff;transition:var(--transition);
 }
-input:checked + .toggle-slider{background:var(--accent)}
+input:checked + .toggle-slider{background:var(--primary)}
 input:checked + .toggle-slider::before{transform:translateX(20px)}
 .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .stat-box{background:var(--bg);border-radius:var(--radius-sm);padding:12px 14px;text-align:center}
-.stat-box-val{font-size:20px;font-weight:800;color:var(--accent);display:block}
+.stat-box-val{font-size:20px;font-weight:800;color:var(--primary);display:block}
 .stat-box-label{font-size:11px;color:var(--text-secondary);margin-top:2px}
 
 /* === WELCOME MODAL === */
 .welcome-fish{text-align:center;margin-bottom:20px}
-.welcome-title{font-size:26px;font-weight:800;text-align:center;margin-bottom:6px;color:var(--text)}
+.welcome-title{font-size:26px;font-weight:800;text-align:center;margin-bottom:6px;color:var(--text-primary)}
 .welcome-sub{font-size:14px;color:var(--text-secondary);text-align:center;margin-bottom:20px}
 .form-group{margin-bottom:14px}
-.form-label{display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px}
+.form-label{display:block;font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:6px}
 .form-input{
   width:100%;padding:10px 14px;border-radius:var(--radius-sm);
-  border:1.5px solid var(--border);background:var(--bg);color:var(--text);
+  border:1.5px solid var(--surface-border);background:var(--bg);color:var(--text-primary);
   font-family:inherit;font-size:14px;transition:var(--transition);
 }
-.form-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(240,165,0,0.15)}
+.form-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(0,113,227,0.15)}
 
 /* === COIN FLOAT === */
 .coin-float{
   position:fixed;pointer-events:none;z-index:9998;
-  font-size:14px;font-weight:800;color:var(--accent);
+  font-size:14px;font-weight:800;color:var(--accent-gold);
   animation:coinFloat 1.2s ease forwards;
   text-shadow:0 1px 3px rgba(0,0,0,0.4);
 }
@@ -614,16 +692,16 @@ input:checked + .toggle-slider::before{transform:translateX(20px)}
 .divider{height:1px;background:var(--border);margin:16px 0}
 
 /* === TAGS === */
-.tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
-.tag-info{background:rgba(33,150,243,0.12);color:#1565C0}
-.tag-success{background:rgba(40,167,69,0.12);color:var(--success)}
-.tag-danger{background:rgba(220,53,69,0.12);color:var(--danger)}
+.tag{display:inline-block;padding:2px 9px;border-radius:980px;font-size:11px;font-weight:600}
+.tag-info{background:rgba(0,113,227,0.1);color:var(--primary)}
+.tag-success{background:rgba(52,199,89,0.12);color:var(--accent-green)}
+.tag-danger{background:rgba(255,59,48,0.12);color:var(--accent-red)}
 .tag-warning{background:rgba(240,165,0,0.15);color:#a07000}
-.tag-primary{background:rgba(0,51,102,0.1);color:var(--primary)}
-[data-theme="dark"] .tag-info{background:rgba(33,150,243,0.2);color:#64b5f6}
-[data-theme="dark"] .tag-success{background:rgba(40,167,69,0.2);color:#69f0ae}
-[data-theme="dark"] .tag-warning{background:rgba(240,165,0,0.2);color:var(--accent)}
-[data-theme="dark"] .tag-primary{background:rgba(0,51,102,0.3);color:#90caf9}
+.tag-primary{background:rgba(0,113,227,0.1);color:var(--primary)}
+[data-theme="dark"] .tag-info{background:rgba(0,113,227,0.2);color:#409cff}
+[data-theme="dark"] .tag-success{background:rgba(52,199,89,0.2);color:#30d158}
+[data-theme="dark"] .tag-warning{background:rgba(240,165,0,0.2);color:var(--accent-gold)}
+[data-theme="dark"] .tag-primary{background:rgba(0,113,227,0.2);color:#409cff}
 
 /* === HELPERS === */
 .hidden{display:none!important}
@@ -637,9 +715,9 @@ input:checked + .toggle-slider::before{transform:translateX(20px)}
 .text-sm{font-size:12px}.text-xs{font-size:11px}
 .text-muted{color:var(--text-secondary)}
 .fw-bold{font-weight:700}.fw-800{font-weight:800}
-.text-accent{color:var(--accent)}
-.text-success{color:var(--success)}
-.text-danger{color:var(--danger)}
+.text-accent{color:var(--accent-gold)}
+.text-success{color:var(--accent-green)}
+.text-danger{color:var(--accent-red)}
 .flex-1{flex:1}
 .w-full{width:100%}
 .overflow-hidden{overflow:hidden}
@@ -667,6 +745,34 @@ input:checked + .toggle-slider::before{transform:translateX(20px)}
 /* === SIDEBAR OVERLAY (mobile) === */
 #sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:850}
 
+/* === LOGIN MODAL === */
+#login-modal .modal{max-width:420px}
+.login-modal-logo{text-align:center;margin-bottom:24px}
+.login-modal-title{font-size:22px;font-weight:800;text-align:center;margin-bottom:6px;color:var(--text-primary)}
+.login-modal-sub{font-size:14px;color:var(--text-secondary);text-align:center;margin-bottom:28px}
+.login-provider-btn{
+  width:100%;padding:14px 20px;
+  border-radius:980px;
+  border:1.5px solid var(--surface-border);
+  background:var(--surface);
+  color:var(--text-primary);
+  font-size:15px;font-weight:600;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  transition:var(--transition);
+  margin-bottom:12px;
+  font-family:inherit;
+}
+.login-provider-btn:hover{background:var(--bg-2);box-shadow:var(--shadow-md);transform:translateY(-1px);border-color:var(--primary)}
+.login-guest-link{
+  display:block;text-align:center;margin-top:8px;
+  font-size:13px;color:var(--text-secondary);cursor:pointer;
+  padding:8px;border-radius:980px;
+  transition:var(--transition);background:none;border:none;
+  font-family:inherit;width:100%;
+}
+.login-guest-link:hover{color:var(--text-primary);background:var(--bg)}
+
 /* === MOBILE === */
 @media(max-width:768px){
   #mobile-menu-btn{display:flex}
@@ -693,6 +799,7 @@ input:checked + .toggle-slider::before{transform:translateX(20px)}
   .lb-table th,.lb-table td{padding:8px 8px}
   .modal{padding:18px}
   .prestige-banner{flex-direction:column;text-align:center}
+  .tutorial-modal{padding:24px 20px 20px}
 }
 @media(max-width:480px){
   #campus-grid{grid-template-columns:repeat(3,1fr)}
@@ -709,9 +816,9 @@ input:checked + .toggle-slider::before{transform:translateX(20px)}
   <div class="modal modal-sm">
     <div class="welcome-fish">
       <svg width="80" height="50" viewBox="0 0 80 50" fill="none">
-        <path d="M4 25 Q20 4 40 25 Q20 46 4 25Z" fill="#F0A500"/>
-        <path d="M36 14 L58 6 L52 25 L58 44 L36 36 Z" fill="#F0A500"/>
-        <circle cx="18" cy="23" r="3.5" fill="#003366"/>
+        <path d="M4 25 Q20 4 40 25 Q20 46 4 25Z" fill="#0071e3"/>
+        <path d="M36 14 L58 6 L52 25 L58 44 L36 36 Z" fill="#0071e3"/>
+        <circle cx="18" cy="23" r="3.5" fill="#1d1d1f"/>
         <circle cx="19.2" cy="21.8" r="1.2" fill="white"/>
       </svg>
     </div>
@@ -720,21 +827,25 @@ input:checked + .toggle-slider::before{transform:translateX(20px)}
     <div class="form-group">
       <label class="form-label" for="player-name-input">Jouw naam (of bijnaam):</label>
       <input id="player-name-input" class="form-input" type="text" placeholder="bijv. Directeur Jansen" maxlength="24" autocomplete="off" aria-describedby="name-error"/>
-      <div id="name-error" role="alert" aria-live="polite" style="color:var(--danger);font-size:12px;margin-top:4px;min-height:16px"></div>
+      <div id="name-error" role="alert" aria-live="polite" style="color:var(--accent-red);font-size:12px;margin-top:4px;min-height:16px"></div>
     </div>
-    <button class="btn btn-accent btn-lg w-full" onclick="startNewGame()">🚀 Start het spel!</button>
+    <button class="btn btn-primary btn-lg w-full" onclick="startNewGame()">🚀 Start het spel!</button>
     <p style="text-align:center;font-size:11px;color:var(--text-secondary);margin-top:12px">Geen externe servers. Alles wordt lokaal opgeslagen.</p>
   </div>
 </div>
 
-<!-- TUTORIAL OVERLAY -->
+<!-- TUTORIAL OVERLAY (7-step modal) -->
 <div id="tutorial-overlay" class="hidden">
-  <div id="tutorial-box" class="tutorial-box">
-    <div class="tutorial-title" id="tutorial-title">Welkom!</div>
-    <div class="tutorial-text" id="tutorial-text">Laten we beginnen.</div>
-    <div class="tutorial-actions">
-      <span class="tutorial-step" id="tutorial-step">Stap 1 / 4</span>
-      <button class="btn btn-accent btn-sm" onclick="nextTutorialStep()">Volgende →</button>
+  <div class="tutorial-modal">
+    <button class="tutorial-skip" onclick="hideTutorial()">Sla over</button>
+    <span id="tutorial-emoji" class="tutorial-step-emoji">🏫</span>
+    <div id="tutorial-title" class="tutorial-step-title">Welkom!</div>
+    <div id="tutorial-text" class="tutorial-step-text">Laten we beginnen.</div>
+    <div class="tutorial-dots" id="tutorial-dots"></div>
+    <div class="tutorial-nav">
+      <button class="btn btn-ghost btn-sm" id="tutorial-prev-btn" onclick="prevTutorialStep()">← Vorige</button>
+      <span class="tutorial-step-info" id="tutorial-step">Stap 1 / 7</span>
+      <button class="btn btn-primary btn-sm" id="tutorial-next-btn" onclick="nextTutorialStep()">Volgende →</button>
     </div>
   </div>
 </div>
@@ -742,10 +853,10 @@ input:checked + .toggle-slider::before{transform:translateX(20px)}
 <!-- HEADER -->
 <header id="header">
   <div class="logo" onclick="handleLogoClick()" title="Ichthus Tycoon">
-    <svg width="36" height="22" viewBox="0 0 40 24" fill="none">
-      <path d="M2 12 Q10 2 20 12 Q10 22 2 12Z" fill="#F0A500"/>
-      <path d="M18 8 L28 4 L25 12 L28 20 L18 16 Z" fill="#F0A500"/>
-      <circle cx="9" cy="11" r="1.8" fill="#003366"/>
+    <svg width="32" height="20" viewBox="0 0 40 24" fill="none">
+      <path d="M2 12 Q10 2 20 12 Q10 22 2 12Z" fill="#0071e3"/>
+      <path d="M18 8 L28 4 L25 12 L28 20 L18 16 Z" fill="#0071e3"/>
+      <circle cx="9" cy="11" r="1.8" fill="#1d1d1f"/>
       <circle cx="9.6" cy="10.4" r="0.6" fill="white"/>
     </svg>
     <div>
@@ -789,11 +900,13 @@ input:checked + .toggle-slider::before{transform:translateX(20px)}
     </div>
     <button id="dark-toggle" onclick="toggleDarkMode()" title="Donker/Licht modus">🌙</button>
     <div id="auth-area" style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-      <button id="btn-login-google" class="btn btn-sm btn-accent">🔑 Login Google</button>
-      <button id="btn-login-ms" class="btn btn-sm btn-outline" style="color:#fff;border-color:rgba(255,255,255,0.4)">🪟 Login Microsoft</button>
-      <div id="auth-user" style="display:none" class="player-badge">
-        <span id="auth-name"></span>
-        <button id="btn-logout" class="btn btn-sm btn-ghost" style="color:#fff;font-size:11px">Uitloggen</button>
+      <!-- Logged out: show login button -->
+      <button id="btn-show-login" class="btn btn-primary btn-sm" onclick="openModal('login-modal')">Inloggen</button>
+      <!-- Logged in: show avatar + name + logout -->
+      <div id="auth-user" style="display:none;align-items:center;gap:8px">
+        <div class="auth-avatar" id="auth-avatar">?</div>
+        <span id="auth-user-name"></span>
+        <button id="btn-logout" class="btn btn-ghost btn-sm">Uitloggen</button>
       </div>
     </div>
     <button id="mobile-menu-btn" onclick="toggleSidebar()" title="Menu">☰</button>
@@ -840,6 +953,21 @@ input:checked + .toggle-slider::before{transform:translateX(20px)}
   </div>
   <div class="nav-item" data-tab="settings" onclick="navigateTo('settings')">
     <span class="nav-icon">⚙️</span><span>Instellingen</span>
+  </div>
+  <!-- Sidebar auth section -->
+  <div id="sidebar-auth">
+    <div id="sidebar-auth-logged-out">
+      <button class="btn btn-primary btn-sm w-full" onclick="openModal('login-modal')">🔑 Log in</button>
+      <p style="font-size:11px;color:var(--text-secondary);text-align:center;margin-top:8px">Sla je score op!</p>
+    </div>
+    <div id="sidebar-auth-logged-in" style="display:none" class="sidebar-auth-user">
+      <div class="sidebar-avatar" id="sidebar-avatar">?</div>
+      <div style="flex:1;min-width:0">
+        <div class="sidebar-user-name" id="sidebar-user-name">Gebruiker</div>
+        <div class="sidebar-user-sub">Ingelogd</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="sidebar-logout-btn" style="font-size:11px;padding:4px 8px">↩</button>
+    </div>
   </div>
 </nav>
 
@@ -1032,6 +1160,32 @@ input:checked + .toggle-slider::before{transform:translateX(20px)}
 <!-- QUOTE BAR -->
 <div id="quote-bar">📣 Welkom bij Ichthus Tycoon! Bouw je school!</div>
 
+<!-- LOGIN MODAL -->
+<div id="login-modal" class="modal-overlay hidden">
+  <div class="modal modal-sm">
+    <button class="modal-close" style="position:absolute;top:16px;right:16px" onclick="closeModal('login-modal')">✕</button>
+    <div class="login-modal-logo">
+      <svg width="48" height="30" viewBox="0 0 40 24" fill="none">
+        <path d="M2 12 Q10 2 20 12 Q10 22 2 12Z" fill="#0071e3"/>
+        <path d="M18 8 L28 4 L25 12 L28 20 L18 16 Z" fill="#0071e3"/>
+        <circle cx="9" cy="11" r="1.8" fill="#1d1d1f"/>
+        <circle cx="9.6" cy="10.4" r="0.6" fill="white"/>
+      </svg>
+    </div>
+    <div class="login-modal-title">Inloggen</div>
+    <div class="login-modal-sub">Sla je score op en doe mee met het echte leaderboard van Ichthus Lyceum.</div>
+    <button id="btn-login-google" class="login-provider-btn">
+      <span style="font-size:20px">🔵</span>
+      <span>Inloggen met Google</span>
+    </button>
+    <button id="btn-login-ms" class="login-provider-btn">
+      <span style="font-size:20px">🪟</span>
+      <span>Inloggen met Microsoft</span>
+    </button>
+    <button class="login-guest-link" onclick="closeModal('login-modal')">Spelen als gast (geen score opslaan)</button>
+  </div>
+</div>
+
 <!-- BUILDING PLACEMENT MODAL -->
 <div id="building-modal" class="modal-overlay hidden">
   <div class="modal modal-lg">
@@ -1091,7 +1245,7 @@ input:checked + .toggle-slider::before{transform:translateX(20px)}
 <script>
 'use strict';
 // ============================================================
-// FIREBASE SETUP
+// FIREBASE SETUP (graceful degradation if CDN fails)
 // Firestore security rules (for reference):
 // rules_version = '2';
 // service cloud.firestore {
@@ -1103,7 +1257,7 @@ input:checked + .toggle-slider::before{transform:translateX(20px)}
 //   }
 // }
 // ============================================================
-const firebaseConfig = {
+const FIREBASE_CONFIG = {
   apiKey: "AIzaSyCFivXcysh3NVs3jd4Gj4ne6vZ3yv3mTss",
   authDomain: "ichthus-tycoon.firebaseapp.com",
   projectId: "ichthus-tycoon",
@@ -1112,10 +1266,15 @@ const firebaseConfig = {
   appId: "1:1007841871474:web:e9dbc2f0e61d40fad7e4eb",
   measurementId: "G-7T8HEW66VH"
 };
-firebase.initializeApp(firebaseConfig);
-const fbAuth = firebase.auth();
-const fbDb = firebase.firestore();
-let fbLeaderboardUnsubscribe = null;
+let fbAuth = null, fbDb = null, fbLeaderboardUnsubscribe = null;
+try {
+  if (typeof firebase !== 'undefined') {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    fbAuth = firebase.auth();
+    fbDb = firebase.firestore();
+  }
+} catch(e) { console.warn('Firebase init failed (offline mode):', e); }
+// (FIREBASE_CONFIG is the canonical config constant)
 
 // ============================================================
 // GAME CONSTANTS
@@ -1330,26 +1489,13 @@ const ACHIEVEMENTS = [
     check: gs => gs.knowledge >= 1000 },
 ];
 
-const FAKE_PLAYERS = [
-  { id:'player_1', name:'Daan Vermeer', rep:8450, buildings:9, staff:7, prestige:1 },
-  { id:'player_2', name:'Emma Westerhof', rep:7200, buildings:8, staff:6, prestige:0 },
-  { id:'player_3', name:'Lars Kok', rep:6800, buildings:10, staff:5, prestige:1 },
-  { id:'player_4', name:'Sophie Hendriks', rep:5900, buildings:7, staff:8, prestige:0 },
-  { id:'player_5', name:'Tim de Boer', rep:5400, buildings:6, staff:4, prestige:0 },
-  { id:'player_6', name:'Julia Maas', rep:4800, buildings:8, staff:6, prestige:0 },
-  { id:'player_7', name:'Finn Kuipers', rep:4200, buildings:5, staff:3, prestige:0 },
-  { id:'player_8', name:'Nathalie Oost', rep:3700, buildings:7, staff:5, prestige:0 },
-  { id:'player_9', name:'Stijn Nieuwenhuis', rep:3200, buildings:4, staff:4, prestige:0 },
-  { id:'player_10', name:'Fleur van Leeuwen', rep:2900, buildings:6, staff:3, prestige:0 },
-  { id:'player_11', name:'Bram Dijkstra', rep:2400, buildings:5, staff:2, prestige:0 },
-  { id:'player_12', name:'Lena Peters', rep:2000, buildings:4, staff:3, prestige:0 },
-  { id:'player_13', name:'Max Gerritsen', rep:1700, buildings:3, staff:2, prestige:0 },
-  { id:'player_14', name:'Amy Huisman', rep:1400, buildings:3, staff:2, prestige:0 },
-  { id:'player_15', name:'Joost van der Laan', rep:1100, buildings:2, staff:1, prestige:0 },
-  { id:'player_16', name:'Roos Bergman', rep:850, buildings:2, staff:1, prestige:0 },
-  { id:'player_17', name:'Kevin Schut', rep:600, buildings:1, staff:1, prestige:0 },
-  { id:'player_18', name:'Merel Postma', rep:350, buildings:1, staff:0, prestige:0 },
-  { id:'player_19', name:'Jesse van Vliet', rep:150, buildings:1, staff:0, prestige:0 },
+// NPC raid targets (used only for raids, NOT for leaderboard display)
+const NPC_RAID_TARGETS = [
+  { id:'npc_1', name:'RSG Broklede', rep:3200, buildings:5, staff:3, prestige:0 },
+  { id:'npc_2', name:'Calvijn College', rep:5800, buildings:8, staff:6, prestige:1 },
+  { id:'npc_3', name:'OSG Schiedam', rep:1800, buildings:3, staff:2, prestige:0 },
+  { id:'npc_4', name:'Christelijk Gymnasium', rep:8400, buildings:11, staff:8, prestige:1 },
+  { id:'npc_5', name:'Bornego College', rep:2600, buildings:4, staff:3, prestige:0 },
 ];
 
 const SPECIAL_UPGRADES = [
@@ -1404,7 +1550,8 @@ let gameState = {
   booster:0,
   tutorialStep:0,
   tutorialDone:false,
-  leaderboard: JSON.parse(JSON.stringify(FAKE_PLAYERS)),
+  leaderboard: [],
+  npcRaidTargets: JSON.parse(JSON.stringify(NPC_RAID_TARGETS)),
   tickCount:0,
   recentEventIds:[],
   sickTeacher:null,
@@ -1849,7 +1996,7 @@ function performRaid(targetId) {
   if (gameState.shield > Date.now()) {
     showNotification('Jij hebt een schild! Raid je eigen school? 🤔', 'warning'); return;
   }
-  const target = gameState.leaderboard.find(p => p.id === targetId);
+  const target = (gameState.npcRaidTargets || NPC_RAID_TARGETS).find(p => p.id === targetId);
   if (!target) return;
 
   gameState.energy -= 50;
@@ -2083,7 +2230,7 @@ function showPrestigeConfirm() {
 
 function performPrestige() {
   gameState.prestige++;
-  // Keep staff, achievements, specialUpgrades, prestige, leaderboard
+  // Keep staff, achievements, specialUpgrades, prestige, npcRaidTargets
   const keep = {
     playerName: gameState.playerName,
     staff: gameState.staff,
@@ -2096,6 +2243,7 @@ function performPrestige() {
     successfulRaids: gameState.successfulRaids,
     raidDefenseCount: gameState.raidDefenseCount,
     leaderboard: gameState.leaderboard,
+    npcRaidTargets: gameState.npcRaidTargets,
     tutorialDone: true,
     raidLog: gameState.raidLog,
     quests: gameState.quests,
@@ -2146,7 +2294,8 @@ function loadGame() {
     const saved = JSON.parse(raw);
     // Merge with defaults for missing top-level fields
     const defaults = {
-      leaderboard: JSON.parse(JSON.stringify(FAKE_PLAYERS)),
+      leaderboard: [],
+      npcRaidTargets: JSON.parse(JSON.stringify(NPC_RAID_TARGETS)),
       achievementDates: {},
       disabledBuildings: {},
       raidCooldowns: {},
@@ -2178,6 +2327,18 @@ function loadGame() {
       if (saved.quests.lastReset === undefined) saved.quests.lastReset = Date.now();
     }
     Object.assign(gameState, saved);
+    // Migration: clear old fake player leaderboard data (player_1..player_19 IDs)
+    if (Array.isArray(gameState.leaderboard) && gameState.leaderboard.length > 0) {
+      const hasFakePlayers = gameState.leaderboard.some(p => /^player_\d+$/.test(p.id));
+      if (hasFakePlayers) {
+        gameState.leaderboard = [];
+        console.info('Migrated: cleared old fake leaderboard players');
+      }
+    }
+    // Migration: ensure npcRaidTargets exists
+    if (!Array.isArray(gameState.npcRaidTargets) || gameState.npcRaidTargets.length === 0) {
+      gameState.npcRaidTargets = JSON.parse(JSON.stringify(NPC_RAID_TARGETS));
+    }
     return saved;
   } catch(e) { console.warn('Load failed:', e); showNotification('Opgeslagen spel kon niet worden geladen. Nieuw spel gestart!', 'warning', 'Laden Mislukt'); return null; }
 }
@@ -2194,16 +2355,19 @@ function resetGame() {
 }
 
 // ============================================================
-// LEADERBOARD SIMULATION
+// NPC RAID TARGET SIMULATION
 // ============================================================
 function simulateLeaderboardUpdate() {
-  const count = Math.floor(Math.random() * 3) + 2;
+  // Simulate NPC raid target rep changes (not real leaderboard)
+  const targets = gameState.npcRaidTargets || NPC_RAID_TARGETS;
+  const count = Math.floor(Math.random() * 2) + 1;
   for (let i = 0; i < count; i++) {
-    const idx = Math.floor(Math.random() * gameState.leaderboard.length);
-    const delta = Math.floor(Math.random() * 250) - 50;
-    gameState.leaderboard[idx].rep = Math.max(0, gameState.leaderboard[idx].rep + delta);
+    const idx = Math.floor(Math.random() * targets.length);
+    const delta = Math.floor(Math.random() * 200) - 30;
+    targets[idx].rep = Math.max(0, targets[idx].rep + delta);
   }
-  if (currentTab === 'leaderboard') renderLeaderboard();
+  // Only re-render if on leaderboard tab (Firestore handles real data)
+  if (currentTab === 'raids') renderRaids();
 }
 
 // ============================================================
@@ -2430,7 +2594,7 @@ function renderProductionSummary() {
   const fmt = (v) => {
     if (v === 0) return '<span style="color:var(--text-secondary)">0</span>';
     const sign = v > 0 ? '+' : '';
-    const color = v > 0 ? 'var(--success)' : 'var(--danger)';
+    const color = v > 0 ? 'var(--accent-green)' : 'var(--accent-red)';
     return '<span style="color:' + color + ';font-weight:700">' + sign + v.toFixed(2) + '</span>';
   };
   el.innerHTML = '<div class="prod-grid">' +
@@ -2501,64 +2665,38 @@ function renderLeaderboard() {
   const container = document.getElementById('leaderboard-container');
   if (!container) return;
 
-  if (fbAuth.currentUser) {
+  if (fbAuth && fbAuth.currentUser) {
     // Firestore real-time leaderboard (subscription set up in navigateTo)
-    // This function just renders whatever is already in the container via the snapshot listener
+    // This function just renders a loading state; snapshot listener fills it in
+    if (!container.querySelector('.lb-table')) {
+      container.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-secondary)">⏳ Leaderboard laden...</div>';
+    }
     return;
   }
 
-  // Not logged in: show fake leaderboard with login banner
-  container.innerHTML = '<div style="background:var(--accent);color:#fff;border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:16px;font-size:14px;font-weight:600;text-align:center">🔑 Log in om het echte leaderboard te zien!</div>' + buildFakeLeaderboardHTML();
-}
-
-function buildFakeLeaderboardHTML() {
-  const playerEntry = {
-    id:'__player__',
-    name: gameState.playerName || 'Jij',
-    rep: Math.floor(gameState.rep),
-    buildings: gameState.buildings.length,
-    staff: gameState.staff.length,
-    prestige: gameState.prestige,
-    isPlayer: true,
-  };
-  const allPlayers = [...gameState.leaderboard, playerEntry];
-  allPlayers.sort((a,b) => b.rep - a.rep);
-  const playerRank = allPlayers.findIndex(p => p.isPlayer) + 1;
-  let html = '<div style="margin-bottom:12px;font-size:14px;color:var(--text-secondary)">Jouw rang: <strong style="color:var(--accent)">#' + playerRank + '</strong> van ' + allPlayers.length + '</div>';
-  html += '<div style="overflow-x:auto"><table class="lb-table"><thead><tr>';
-  html += '<th>#</th><th>Naam</th><th>REP</th><th>Gebouwen</th><th>Docenten</th><th>Prestige</th>';
-  html += '</tr></thead><tbody>';
-  for (let i = 0; i < allPlayers.length; i++) {
-    const p = allPlayers[i];
-    const rank = i + 1;
-    let rankBadge = '';
-    if (rank === 1) rankBadge = '<span class="rank-badge rank-1">🥇</span>';
-    else if (rank === 2) rankBadge = '<span class="rank-badge rank-2">🥈</span>';
-    else if (rank === 3) rankBadge = '<span class="rank-badge rank-3">🥉</span>';
-    else rankBadge = '<span class="rank-badge rank-other">' + rank + '</span>';
-    const isPlayer = p.isPlayer;
-    html += '<tr class="' + (isPlayer ? 'player-row' : '') + '">';
-    html += '<td>' + rankBadge + '</td>';
-    html += '<td><div class="lb-name">' + escHtml(p.name) + (isPlayer ? '<span class="lb-you-badge">JIJ</span>' : '') + '</div></td>';
-    html += '<td><strong>' + Math.floor(p.rep).toLocaleString('nl-NL') + '</strong></td>';
-    html += '<td>' + (p.buildings || 0) + '</td>';
-    html += '<td>' + (p.staff || 0) + '</td>';
-    html += '<td class="prestige-stars">' + (p.prestige > 0 ? '✨'.repeat(Math.min(p.prestige, 5)) : '—') + '</td>';
-    html += '</tr>';
-  }
-  html += '</tbody></table></div>';
-  return html;
+  // Not logged in: show login prompt
+  container.innerHTML =
+    '<div class="lb-login-prompt">' +
+    '<div style="font-size:48px;margin-bottom:12px">🏆</div>' +
+    '<h3 style="font-size:18px;font-weight:800;margin-bottom:8px">Log in om mee te doen!</h3>' +
+    '<p>Log in met Google of Microsoft om je score op te slaan en te concurreren met andere spelers van Ichthus Lyceum.</p>' +
+    '<button class="btn btn-accent" onclick="openModal(\'login-modal\')">🔑 Inloggen</button>' +
+    '</div>';
 }
 
 function renderFirestoreLeaderboard(snapshot) {
   const container = document.getElementById('leaderboard-container');
   if (!container) return;
-  const currentUid = fbAuth.currentUser ? fbAuth.currentUser.uid : null;
+  const currentUid = fbAuth && fbAuth.currentUser ? fbAuth.currentUser.uid : null;
   const docs = [];
   snapshot.forEach(doc => docs.push({ uid: doc.id, ...doc.data() }));
+  if (docs.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-secondary)">🏆 Nog geen spelers op het leaderboard. Speel wat verder om je score op te slaan!</div>';
+    return;
+  }
   let html = '<div style="margin-bottom:12px;font-size:14px;color:var(--text-secondary)">🌐 Live leaderboard — top ' + docs.length + ' spelers</div>';
   html += '<div style="overflow-x:auto"><table class="lb-table"><thead><tr>';
-  html += '<th>#</th><th>Naam</th><th>REP</th><th>Prestige</th>';
+  html += '<th>#</th><th>Naam</th><th>Prestige</th><th>REP</th><th></th>';
   html += '</tr></thead><tbody>';
   for (let i = 0; i < docs.length; i++) {
     const p = docs[i];
@@ -2571,9 +2709,10 @@ function renderFirestoreLeaderboard(snapshot) {
     else rankBadge = '<span class="rank-badge rank-other">' + rank + '</span>';
     html += '<tr class="' + (isMe ? 'player-row' : '') + '">';
     html += '<td>' + rankBadge + '</td>';
-    html += '<td><div class="lb-name">' + escHtml(p.name || '?') + (isMe ? '<span class="lb-you-badge">JIJ</span>' : '') + '</div></td>';
-    html += '<td><strong>' + Math.floor(p.rep || 0).toLocaleString('nl-NL') + '</strong></td>';
+    html += '<td><div class="lb-name">' + escHtml(p.name || '?') + '</div></td>';
     html += '<td class="prestige-stars">' + ((p.prestige || 0) > 0 ? '✨'.repeat(Math.min(p.prestige, 5)) : '—') + '</td>';
+    html += '<td><strong>' + Math.floor(p.rep || 0).toLocaleString('nl-NL') + '</strong></td>';
+    html += '<td>' + (isMe ? '<span class="lb-you-badge">JIJ</span>' : '') + '</td>';
     html += '</tr>';
   }
   html += '</tbody></table></div>';
@@ -2605,7 +2744,7 @@ function renderRaids() {
   html += '<div class="card mb-16">';
   html += '<div class="card-title">🎯 Raiddoelen</div>';
   html += '<div class="raid-targets-grid">';
-  const targets = [...gameState.leaderboard].sort((a,b) => b.rep - a.rep);
+  const targets = [...(gameState.npcRaidTargets || NPC_RAID_TARGETS)].sort((a,b) => b.rep - a.rep);
   for (const target of targets) {
     const cooldown = gameState.raidCooldowns[target.id];
     const onCooldown = cooldown && now < cooldown;
@@ -2721,7 +2860,7 @@ function renderUpgrades() {
       html += '<div class="upgrade-name">' + def.name + '</div>';
       html += '<div class="upgrade-desc">' + def.description + '</div>';
       html += '<div class="upgrade-reqs">Level: <strong>' + b.level + '/5</strong> &nbsp; ';
-      html += '<span style="color:var(--accent)">' + '★'.repeat(b.level) + '☆'.repeat(5-b.level) + '</span></div>';
+      html += '<span style="color:var(--accent-gold)">' + '★'.repeat(b.level) + '☆'.repeat(5-b.level) + '</span></div>';
       if (maxLevel) {
         html += '<span class="tag tag-success">✓ Maximaal level</span>';
       } else {
@@ -2805,6 +2944,11 @@ function renderSettings() {
   html += '<div class="stat-box"><span class="stat-box-val">' + gameState.prestige + '</span><div class="stat-box-label">Prestige niveau</div></div>';
   html += '<div class="stat-box"><span class="stat-box-val">' + gameState.successfulRaids + '</span><div class="stat-box-label">Raids gewonnen</div></div>';
   html += '</div></div></div>';
+  html += '<div class="card mb-16"><div class="settings-section">';
+  html += '<div class="settings-section-title">Tutorial</div>';
+  html += '<div class="settings-row"><div><div class="settings-label">Tutorial opnieuw zien</div><div class="settings-sub">Bekijk de 7-staps introductie opnieuw</div></div>';
+  html += '<button class="btn btn-outline btn-sm" onclick="gameState.tutorialDone=false;gameState.tutorialStep=0;showTutorial()">📖 Toon tutorial</button></div>';
+  html += '</div></div>';
   html += '<div class="card mb-16"><div class="settings-section">';
   html += '<div class="settings-section-title">Prestige</div>';
   html += '<p class="text-muted text-sm mb-12">Prestigieuzen reset je campus maar behoudt je docenten en geeft een permanente +10% bonus.</p>';
@@ -2892,10 +3036,10 @@ function openBuildingInfoModal(buildingIndex) {
     const icons = {coins:'💰',rep:'⭐',energy:'⚡',chaos:'🔥',knowledge:'📚'};
     for (const [k,v] of prodEntries) {
       const scaled = v * lvl;
-      const color = scaled > 0 ? 'var(--success)' : 'var(--danger)';
+      const color = scaled > 0 ? 'var(--accent-green)' : 'var(--accent-red)';
       html += '<tr><td>' + (icons[k]||k) + ' ' + capFirst(k) + '</td><td style="color:'+color+';font-weight:700">' + (scaled>0?'+':'') + scaled + '/s</td></tr>';
     }
-    if (def.defense) html += '<tr><td>🛡️ Verdediging</td><td style="color:var(--success);font-weight:700">+' + def.defense + '%</td></tr>';
+    if (def.defense) html += '<tr><td>🛡️ Verdediging</td><td style="color:var(--accent-green);font-weight:700">+' + def.defense + '%</td></tr>';
     if (def.repMultiplier) html += '<tr><td>⭐ REP Multiplier</td><td style="font-weight:700">x' + def.repMultiplier + '</td></tr>';
     if (def.coinProtection) html += '<tr><td>🔒 Coin Bescherming</td><td style="font-weight:700">' + Math.round(def.coinProtection*100) + '%</td></tr>';
     html += '</tbody></table>';
@@ -2988,12 +3132,14 @@ function closeModal(id) {
 // ============================================================
 // NAVIGATION
 // ============================================================
+const VALID_TABS = ['campus','docenten','upgrades','leaderboard','raids','quests','achievements','shop','settings'];
 function navigateTo(tab) {
+  if (!VALID_TABS.includes(tab)) { console.warn('navigateTo: invalid tab', tab); return; }
   currentTab = tab;
-  // Hide all tabs
+  // Hide all tab-content panels
   document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-  // Show target tab
-  const target = document.querySelector('[data-tab="' + tab + '"]');
+  // Show target tab-content (use attribute selector directly for efficiency)
+  const target = document.querySelector('.tab-content[data-tab="' + tab + '"]');
   if (target) target.classList.add('active');
   // Update nav items
   document.querySelectorAll('.nav-item').forEach(el => {
@@ -3138,33 +3284,50 @@ function updateQuoteBar() {
 }
 
 // ============================================================
-// TUTORIAL
+// TUTORIAL (7-step modal)
 // ============================================================
 const TUTORIAL_STEPS = [
   {
-    title: '👋 Welkom bij Ichthus Tycoon!',
-    text: 'Bouw de beste school van Nederland. Hier zie je al je resources: Coins, REP, Energie, Chaos en Kennis.',
-    top: '80px', left: '50%',
+    emoji: '🏫',
+    title: 'Welkom bij Ichthus Tycoon!',
+    text: 'Jij bent de nieuwe Campus Manager van Ichthus Lyceum. Bouw de beste school van Nederland!',
   },
   {
-    title: '🗺️ Navigatie',
-    text: 'Gebruik de zijbalk om tussen Campus, Docenten, Shop en meer te navigeren.',
-    top: '120px', left: '220px',
+    emoji: '💰',
+    title: 'Je Resources',
+    text: 'Coins verdien je met gebouwen. REP ⭐ is je score. Energie ⚡ laadt op. Chaos 🔥 moet laag blijven. Kennis 📚 voor upgrades.',
   },
   {
-    title: '🏗️ Campus bouwen',
-    text: 'Klik op een leeg vakje ("+") om een gebouw te bouwen. Begin met een Lokaal!',
-    top: '300px', left: '50%',
+    emoji: '🏗️',
+    title: 'Bouw je Campus',
+    text: 'Klik op een leeg vakje op het campus-raster om een gebouw te plaatsen. Begin met een Lokaal!',
   },
   {
-    title: '🎉 Klaar om te spelen!',
-    text: 'Je bent klaar! Bouw gebouwen, verzamel docenten, raid anderen en word de beste school!',
-    top: '50%', left: '50%',
+    emoji: '👩‍🏫',
+    title: 'Docenten & Perks',
+    text: 'Koop docentenpakketten in de Shop. Elke docent heeft een speciale perk die je school versterkt!',
+  },
+  {
+    emoji: '📋',
+    title: 'Random Events',
+    text: 'Toetsweek, WiFi Storing, Open Dag... Events beïnvloeden je school. Zorg dat je gebouwen hebt om ze aan te kunnen!',
+  },
+  {
+    emoji: '🏆',
+    title: 'Concurreer!',
+    text: 'Log in met Google of Microsoft om je score op te slaan in het echte leaderboard van Ichthus Lyceum!',
+  },
+  {
+    emoji: '🚀',
+    title: 'Succes, Campus Manager!',
+    text: 'Speeltip: bouw eerst 3 Lokalen, dan een Kantine, dan een ICT-Lab. Veel plezier!',
+    confetti: true,
   },
 ];
 
 function showTutorial() {
   if (gameState.tutorialDone) return;
+  gameState.tutorialStep = 0;
   const overlay = document.getElementById('tutorial-overlay');
   if (overlay) overlay.classList.remove('hidden');
   renderTutorialStep();
@@ -3173,25 +3336,48 @@ function showTutorial() {
 function renderTutorialStep() {
   const step = TUTORIAL_STEPS[gameState.tutorialStep];
   if (!step) { hideTutorial(); return; }
-  const box = document.getElementById('tutorial-box');
-  const title = document.getElementById('tutorial-title');
-  const text = document.getElementById('tutorial-text');
+  const emojiEl = document.getElementById('tutorial-emoji');
+  const titleEl = document.getElementById('tutorial-title');
+  const textEl = document.getElementById('tutorial-text');
   const stepEl = document.getElementById('tutorial-step');
-  if (box) {
-    box.style.top = step.top;
-    box.style.left = step.left;
-    box.style.transform = 'translateX(-50%)';
+  const dotsEl = document.getElementById('tutorial-dots');
+  const prevBtn = document.getElementById('tutorial-prev-btn');
+  const nextBtn = document.getElementById('tutorial-next-btn');
+
+  if (emojiEl) emojiEl.textContent = step.emoji;
+  if (titleEl) titleEl.textContent = step.title;
+  if (textEl) textEl.textContent = step.text;
+  if (stepEl) stepEl.textContent = 'Stap ' + (gameState.tutorialStep + 1) + ' / ' + TUTORIAL_STEPS.length;
+
+  // Render dots
+  if (dotsEl) {
+    dotsEl.innerHTML = TUTORIAL_STEPS.map((_, i) =>
+      '<div class="tutorial-dot' + (i === gameState.tutorialStep ? ' active' : '') + '"></div>'
+    ).join('');
   }
-  if (title) title.textContent = step.title;
-  if (text) text.textContent = step.text;
-  if (stepEl) stepEl.textContent = 'Stap ' + (gameState.tutorialStep+1) + ' / ' + TUTORIAL_STEPS.length;
+
+  // Show/hide prev button
+  if (prevBtn) prevBtn.style.visibility = gameState.tutorialStep > 0 ? 'visible' : 'hidden';
+
+  // Last step: change next button to "Start!"
+  const isLast = gameState.tutorialStep === TUTORIAL_STEPS.length - 1;
+  if (nextBtn) nextBtn.textContent = isLast ? '🚀 Start!' : 'Volgende →';
+
+  if (step.confetti) spawnConfetti();
 }
 
 function nextTutorialStep() {
-  gameState.tutorialStep++;
-  if (gameState.tutorialStep >= TUTORIAL_STEPS.length) {
+  if (gameState.tutorialStep >= TUTORIAL_STEPS.length - 1) {
     hideTutorial();
   } else {
+    gameState.tutorialStep++;
+    renderTutorialStep();
+  }
+}
+
+function prevTutorialStep() {
+  if (gameState.tutorialStep > 0) {
+    gameState.tutorialStep--;
     renderTutorialStep();
   }
 }
@@ -3200,6 +3386,7 @@ function hideTutorial() {
   gameState.tutorialDone = true;
   const overlay = document.getElementById('tutorial-overlay');
   if (overlay) overlay.classList.add('hidden');
+  saveGame();
 }
 
 // ============================================================
@@ -3296,12 +3483,16 @@ function _tryInit() {
   });
 
   initGame();
+  setupAuthButtons();
   // Apply Firebase user info if auth state was already resolved before game init
-  const fbUser = fbAuth.currentUser;
-  if (fbUser) {
-    gameState.playerName = fbUser.displayName || fbUser.email;
-    saveGame();
-    syncLeaderboardToFirestore();
+  if (fbAuth) {
+    const fbUser = fbAuth.currentUser;
+    if (fbUser) {
+      gameState.playerName = fbUser.displayName || fbUser.email;
+      saveGame();
+      syncLeaderboardToFirestore();
+      renderAuthUI(fbUser);
+    }
   }
 }
 if (document.readyState === 'loading') {
@@ -3343,49 +3534,126 @@ function subscribeFirestoreLeaderboard() {
     });
 }
 
-document.getElementById('btn-login-google').addEventListener('click', () => {
-  fbAuth.signInWithPopup(new firebase.auth.GoogleAuthProvider())
-    .catch(err => showNotification('Google login mislukt: ' + err.message, 'error'));
-});
+// ============================================================
+// FIREBASE AUTH & FIRESTORE LEADERBOARD
+// ============================================================
+function renderAuthUI(user) {
+  // Header auth area
+  const btnShowLogin = document.getElementById('btn-show-login');
+  const authUserDiv = document.getElementById('auth-user');
+  const authAvatar = document.getElementById('auth-avatar');
+  const authUserName = document.getElementById('auth-user-name');
+  // Sidebar auth
+  const sidebarLoggedOut = document.getElementById('sidebar-auth-logged-out');
+  const sidebarLoggedIn = document.getElementById('sidebar-auth-logged-in');
+  const sidebarAvatar = document.getElementById('sidebar-avatar');
+  const sidebarUserName = document.getElementById('sidebar-user-name');
 
-document.getElementById('btn-login-ms').addEventListener('click', () => {
-  fbAuth.signInWithPopup(new firebase.auth.OAuthProvider('microsoft.com'))
-    .catch(err => showNotification('Microsoft login mislukt: ' + err.message, 'error'));
-});
-
-document.getElementById('btn-logout').addEventListener('click', () => fbAuth.signOut().catch(err => console.warn('Sign out failed:', err)));
-
-fbAuth.onAuthStateChanged(user => {
   if (user) {
-    document.getElementById('btn-login-google').style.display = 'none';
-    document.getElementById('btn-login-ms').style.display = 'none';
-    document.getElementById('auth-user').style.display = 'flex';
-    document.getElementById('auth-name').textContent = user.displayName || user.email;
-    // Override player name in game state (only after game is initialized to avoid overwriting save)
-    if (_gameInited) {
-      gameState.playerName = user.displayName || user.email;
-      saveGame();
-      syncLeaderboardToFirestore();
-      // Refresh leaderboard if currently on that tab
-      if (currentTab === 'leaderboard') {
-        subscribeFirestoreLeaderboard();
-      }
-    }
+    const displayName = user.displayName || user.email || 'Gebruiker';
+    const initial = displayName.charAt(0).toUpperCase();
+    // Header
+    if (btnShowLogin) btnShowLogin.style.display = 'none';
+    if (authUserDiv) { authUserDiv.style.display = 'flex'; }
+    if (authAvatar) authAvatar.textContent = initial;
+    if (authUserName) authUserName.textContent = displayName.split(' ')[0];
+    // Sidebar
+    if (sidebarLoggedOut) sidebarLoggedOut.style.display = 'none';
+    if (sidebarLoggedIn) sidebarLoggedIn.style.display = 'flex';
+    if (sidebarAvatar) sidebarAvatar.textContent = initial;
+    if (sidebarUserName) sidebarUserName.textContent = displayName;
   } else {
-    document.getElementById('btn-login-google').style.display = '';
-    document.getElementById('btn-login-ms').style.display = '';
-    document.getElementById('auth-user').style.display = 'none';
-    // Unsubscribe Firestore listener on logout
-    if (fbLeaderboardUnsubscribe) {
-      fbLeaderboardUnsubscribe();
-      fbLeaderboardUnsubscribe = null;
-    }
-    // Re-render leaderboard with fake data if on that tab
-    if (_gameInited && currentTab === 'leaderboard') {
-      renderLeaderboard();
-    }
+    // Header
+    if (btnShowLogin) btnShowLogin.style.display = '';
+    if (authUserDiv) authUserDiv.style.display = 'none';
+    // Sidebar
+    if (sidebarLoggedOut) sidebarLoggedOut.style.display = '';
+    if (sidebarLoggedIn) sidebarLoggedIn.style.display = 'none';
   }
-});
+}
+
+function syncLeaderboardToFirestore() {
+  if (!fbAuth || !fbDb) return;
+  const user = fbAuth.currentUser;
+  if (!user) return;
+  fbDb.collection('leaderboard').doc(user.uid).set({
+    name: user.displayName || user.email,
+    rep: Math.floor(gameState.rep),
+    prestige: gameState.prestige || 0,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).catch(err => console.warn('Leaderboard sync failed:', err));
+}
+
+function subscribeFirestoreLeaderboard() {
+  if (!fbAuth || !fbDb || !fbAuth.currentUser) return;
+  // Unsubscribe any previous listener first
+  if (fbLeaderboardUnsubscribe) {
+    fbLeaderboardUnsubscribe();
+    fbLeaderboardUnsubscribe = null;
+  }
+  fbLeaderboardUnsubscribe = fbDb.collection('leaderboard')
+    .orderBy('rep', 'desc')
+    .limit(25)
+    .onSnapshot(snapshot => {
+      if (currentTab === 'leaderboard') {
+        renderFirestoreLeaderboard(snapshot);
+      }
+    }, err => {
+      console.warn('Leaderboard snapshot error:', err);
+      if (currentTab === 'leaderboard') renderLeaderboard();
+    });
+}
+
+// Wire up auth buttons after DOM is ready
+function setupAuthButtons() {
+  const btnGoogle = document.getElementById('btn-login-google');
+  const btnMs = document.getElementById('btn-login-ms');
+  const btnLogout = document.getElementById('btn-logout');
+  const sidebarLogout = document.getElementById('sidebar-logout-btn');
+
+  if (btnGoogle) {
+    btnGoogle.addEventListener('click', () => {
+      if (!fbAuth) return;
+      fbAuth.signInWithPopup(new firebase.auth.GoogleAuthProvider())
+        .then(() => closeModal('login-modal'))
+        .catch(err => showNotification('Google login mislukt: ' + err.message, 'error'));
+    });
+  }
+  if (btnMs) {
+    btnMs.addEventListener('click', () => {
+      if (!fbAuth) return;
+      fbAuth.signInWithPopup(new firebase.auth.OAuthProvider('microsoft.com'))
+        .then(() => closeModal('login-modal'))
+        .catch(err => showNotification('Microsoft login mislukt: ' + err.message, 'error'));
+    });
+  }
+  const doLogout = () => {
+    if (!fbAuth) return;
+    fbAuth.signOut().catch(err => console.warn('Sign out failed:', err));
+  };
+  if (btnLogout) btnLogout.addEventListener('click', doLogout);
+  if (sidebarLogout) sidebarLogout.addEventListener('click', doLogout);
+}
+
+if (fbAuth) {
+  fbAuth.onAuthStateChanged(user => {
+    renderAuthUI(user);
+    if (user) {
+      if (_gameInited) {
+        gameState.playerName = user.displayName || user.email;
+        saveGame();
+        syncLeaderboardToFirestore();
+        if (currentTab === 'leaderboard') subscribeFirestoreLeaderboard();
+      }
+    } else {
+      if (fbLeaderboardUnsubscribe) {
+        fbLeaderboardUnsubscribe();
+        fbLeaderboardUnsubscribe = null;
+      }
+      if (_gameInited && currentTab === 'leaderboard') renderLeaderboard();
+    }
+  });
+}
 </script>
 </body>
 </html>
