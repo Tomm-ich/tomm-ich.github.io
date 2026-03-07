@@ -1,7 +1,3391 @@
 <!DOCTYPE html>
 <html lang="nl" data-theme="light">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ichthus Tycoon</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Firebase compat CDN (no build step required) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics-compat.js"></script>
+  <style>
+:root {
+  --primary: #003366;
+  --accent: #F0A500;
+  --success: #28a745;
+  --danger: #dc3545;
+  --bg: #f4f6f9;
+  --card-bg: #ffffff;
+  --text: #1a1a2e;
+  --text-secondary: #6c757d;
+  --border: #dee2e6;
+  --sidebar-width: 200px;
+  --header-height: 64px;
+  --shadow: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.14);
+  --radius: 10px;
+  --radius-sm: 6px;
+  --transition: all 0.2s ease;
+}
+[data-theme="dark"] {
+  --bg: #0d1117;
+  --card-bg: #161b22;
+  --text: #e6edf3;
+  --text-secondary: #8b949e;
+  --border: #30363d;
+  --shadow: 0 2px 8px rgba(0,0,0,0.35);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.5);
+}
+/* === RESET === */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;scroll-behavior:smooth}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);transition:background 0.3s,color 0.3s;min-height:100vh;overflow-x:hidden}
+a{color:var(--accent);text-decoration:none}
+ul{list-style:none}
+button{cursor:pointer;border:none;font-family:inherit}
+input{font-family:inherit}
+img{max-width:100%}
 
+/* === SCROLLBAR === */
+::-webkit-scrollbar{width:7px;height:7px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:var(--text-secondary)}
+
+/* === HEADER === */
+#header{
+  position:fixed;top:0;left:0;right:0;
+  height:var(--header-height);
+  background:var(--primary);
+  color:#fff;
+  display:flex;align-items:center;gap:12px;padding:0 16px;
+  z-index:1000;
+  box-shadow:0 2px 12px rgba(0,0,0,0.25);
+}
+#header .logo{display:flex;align-items:center;gap:10px;min-width:200px;text-decoration:none;color:#fff;cursor:pointer}
+#header .logo-title{font-weight:800;font-size:17px;letter-spacing:-0.3px;color:#fff}
+#header .logo-sub{font-size:10px;color:rgba(255,255,255,0.65);display:block;line-height:1}
+#resource-bar{display:flex;align-items:center;gap:10px;flex:1;overflow-x:auto;padding:0 8px;min-width:0}
+#resource-bar::-webkit-scrollbar{height:3px}
+.resource-item{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.12);border-radius:20px;padding:4px 10px;white-space:nowrap;font-size:13px;font-weight:600;transition:var(--transition);flex-shrink:0}
+.resource-item:hover{background:rgba(255,255,255,0.2)}
+.resource-icon{font-size:14px}
+.resource-val{color:#fff}
+.resource-rate{color:rgba(255,255,255,0.6);font-size:11px;font-weight:400}
+.header-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.player-badge{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,0.15);border-radius:20px;padding:5px 12px;font-size:13px;font-weight:600;color:#fff}
+.player-badge .prestige-star{color:var(--accent);font-size:12px}
+#dark-toggle{background:rgba(255,255,255,0.15);border:none;color:#fff;border-radius:50%;width:34px;height:34px;font-size:16px;display:flex;align-items:center;justify-content:center;transition:var(--transition);cursor:pointer}
+#dark-toggle:hover{background:rgba(255,255,255,0.28)}
+#mobile-menu-btn{display:none;background:rgba(255,255,255,0.15);border:none;color:#fff;border-radius:6px;width:36px;height:36px;font-size:20px;align-items:center;justify-content:center;cursor:pointer}
+#booster-indicator{background:var(--accent);color:#000;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700;display:none;animation:pulse 1s infinite}
+#shield-indicator{background:var(--success);color:#fff;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700;display:none;animation:pulse 1s infinite}
+
+/* === SIDEBAR === */
+#sidebar{
+  position:fixed;top:var(--header-height);left:0;
+  width:var(--sidebar-width);
+  height:calc(100vh - var(--header-height));
+  background:var(--card-bg);
+  border-right:1px solid var(--border);
+  overflow-y:auto;overflow-x:hidden;
+  z-index:900;
+  padding:12px 0 80px;
+  transition:transform 0.3s ease;
+}
+.nav-section{padding:8px 12px 4px;font-size:10px;font-weight:700;color:var(--text-secondary);letter-spacing:0.8px;text-transform:uppercase;margin-top:4px}
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 16px;
+  font-size:14px;font-weight:500;
+  color:var(--text-secondary);
+  cursor:pointer;
+  border-radius:0;
+  transition:var(--transition);
+  position:relative;
+  border-left:3px solid transparent;
+}
+.nav-item:hover{color:var(--text);background:rgba(0,51,102,0.07)}
+.nav-item.active{color:var(--primary);background:rgba(0,51,102,0.1);border-left-color:var(--primary);font-weight:600}
+[data-theme="dark"] .nav-item.active{color:var(--accent);background:rgba(240,165,0,0.1);border-left-color:var(--accent)}
+.nav-icon{font-size:16px;width:20px;text-align:center}
+.nav-badge{
+  margin-left:auto;background:var(--danger);color:#fff;
+  border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;
+  min-width:18px;text-align:center;
+}
+.nav-badge.gold{background:var(--accent);color:#000}
+
+/* === MAIN CONTENT === */
+#main{
+  margin-left:var(--sidebar-width);
+  margin-top:var(--header-height);
+  padding:24px;
+  min-height:calc(100vh - var(--header-height));
+  padding-bottom:60px;
+}
+.tab-content{display:none}
+.tab-content.active{display:block;animation:fadeIn 0.2s ease}
+.page-header{margin-bottom:20px}
+.page-title{font-size:22px;font-weight:800;color:var(--text);margin-bottom:4px}
+.page-subtitle{font-size:14px;color:var(--text-secondary)}
+
+/* === CARDS === */
+.card{
+  background:var(--card-bg);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:18px;
+  box-shadow:var(--shadow);
+  transition:var(--transition);
+}
+.card:hover{box-shadow:var(--shadow-lg)}
+.card-title{
+  font-size:14px;font-weight:700;
+  color:var(--text);
+  margin-bottom:14px;
+  display:flex;align-items:center;gap:8px;
+}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+
+/* === CAMPUS GRID === */
+#campus-grid{
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:6px;
+  margin-top:8px;
+}
+.campus-layout{display:grid;grid-template-columns:1fr 240px;gap:16px;align-items:start}
+.campus-sidebar{}
+.campus-tile{
+  aspect-ratio:1;
+  border:2px dashed var(--border);
+  border-radius:var(--radius-sm);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;
+  font-size:11px;color:var(--text-secondary);
+  transition:var(--transition);
+  position:relative;overflow:hidden;
+  background:var(--bg);
+  min-height:70px;
+}
+.campus-tile:hover{border-color:var(--accent);background:rgba(240,165,0,0.07);transform:scale(1.04)}
+.campus-tile.occupied{
+  border:2px solid var(--border);
+  background:var(--card-bg);
+  cursor:pointer;
+}
+.campus-tile.occupied:hover{border-color:var(--primary);transform:scale(1.06);z-index:10}
+.campus-tile.legendary-glow{border-color:#9C27B0;box-shadow:0 0 10px rgba(156,39,176,0.4);animation:legendaryBorder 2s infinite}
+.campus-tile .tile-emoji{font-size:26px;line-height:1;margin-bottom:2px}
+.campus-tile .tile-level{
+  position:absolute;bottom:3px;right:4px;
+  background:var(--accent);color:#000;
+  font-size:9px;font-weight:800;
+  border-radius:4px;padding:1px 4px;
+}
+.campus-tile .tile-name{
+  position:absolute;bottom:3px;left:0;right:0;
+  text-align:center;font-size:8px;color:var(--text-secondary);
+  padding:0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.campus-tile .tile-name-sm{font-size:7px}
+.campus-tile .tile-staff{
+  position:absolute;top:3px;right:3px;
+  font-size:11px;
+}
+.campus-tile .tile-plus{font-size:20px;color:var(--border);transition:var(--transition)}
+.campus-tile:hover .tile-plus{color:var(--accent)}
+.campus-tile .tile-tooltip{
+  position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,0.85);color:#fff;
+  font-size:11px;padding:5px 9px;border-radius:6px;
+  white-space:nowrap;pointer-events:none;opacity:0;
+  transition:opacity 0.15s;z-index:50;
+}
+.campus-tile:hover .tile-tooltip{opacity:1}
+
+/* === PRODUCTION SUMMARY === */
+.prod-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+.prod-item{display:flex;align-items:center;gap:8px;font-size:13px;padding:6px 10px;background:var(--bg);border-radius:var(--radius-sm)}
+.prod-item .prod-icon{font-size:16px}
+.prod-item .prod-val{font-weight:700;color:var(--text)}
+.prod-item .prod-label{color:var(--text-secondary);font-size:12px}
+.prod-item .prod-rate{margin-left:auto;font-size:11px;color:var(--text-secondary)}
+
+/* === ACTIVE EVENTS BAR === */
+.active-events-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;min-height:0}
+.event-pill{
+  display:inline-flex;align-items:center;gap:5px;
+  background:rgba(240,165,0,0.15);color:var(--accent);
+  border:1px solid var(--accent);border-radius:20px;
+  padding:4px 12px;font-size:12px;font-weight:600;
+  animation:pulse 2s infinite;
+}
+.event-pill.danger{background:rgba(220,53,69,0.12);color:var(--danger);border-color:var(--danger)}
+
+/* === TEACHER CARDS === */
+.staff-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px}
+.teacher-card{
+  background:var(--card-bg);
+  border:2px solid var(--border);
+  border-radius:var(--radius);
+  padding:16px;
+  position:relative;overflow:hidden;
+  transition:var(--transition);
+}
+.teacher-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.teacher-card.rarity-common{border-color:#9e9e9e}
+.teacher-card.rarity-rare{border-color:#2196F3;box-shadow:0 0 8px rgba(33,150,243,0.2)}
+.teacher-card.rarity-epic{border-color:#9C27B0;box-shadow:0 0 8px rgba(156,39,176,0.2)}
+.teacher-card.rarity-legendary{border:2px solid transparent;background-clip:padding-box;animation:legendaryBorder 3s infinite;box-shadow:0 0 16px rgba(255,215,0,0.3)}
+.teacher-card.sick{opacity:0.6;filter:grayscale(0.5)}
+.teacher-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.teacher-emoji{font-size:36px;line-height:1}
+.teacher-name{font-size:15px;font-weight:700;color:var(--text)}
+.teacher-subject{font-size:12px;color:var(--text-secondary);margin-top:2px}
+.rarity-badge{
+  display:inline-block;border-radius:10px;padding:2px 9px;
+  font-size:10px;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;
+}
+.rarity-badge.common{background:#e0e0e0;color:#555}
+.rarity-badge.rare{background:#e3f2fd;color:#1565C0}
+.rarity-badge.epic{background:#f3e5f5;color:#6A1B9A}
+.rarity-badge.legendary{background:linear-gradient(90deg,#FFD700,#FFA500);color:#000}
+[data-theme="dark"] .rarity-badge.common{background:#424242;color:#ccc}
+[data-theme="dark"] .rarity-badge.rare{background:#1a3a5c;color:#64b5f6}
+[data-theme="dark"] .rarity-badge.epic{background:#2d1040;color:#ce93d8}
+.teacher-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0}
+.stat-row{display:flex;justify-content:space-between;align-items:center;font-size:12px}
+.stat-label{color:var(--text-secondary)}
+.stat-bar{height:4px;border-radius:2px;background:var(--border);flex:1;margin:0 8px;overflow:hidden}
+.stat-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--primary),var(--accent))}
+.stat-val{font-weight:700;font-size:11px;min-width:16px;text-align:right}
+.teacher-perk{
+  background:rgba(240,165,0,0.1);
+  border:1px solid rgba(240,165,0,0.35);
+  border-radius:var(--radius-sm);padding:8px 10px;
+  font-size:12px;margin:8px 0;color:var(--text);
+}
+.teacher-perk strong{color:var(--accent);font-size:11px;display:block;margin-bottom:2px}
+.teacher-quote{
+  font-size:11px;color:var(--text-secondary);font-style:italic;
+  border-left:3px solid var(--accent);padding-left:8px;margin:8px 0;
+}
+.teacher-assign{margin-top:10px}
+.teacher-assign label{font-size:11px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:4px}
+.assign-select{
+  width:100%;padding:6px 10px;border-radius:var(--radius-sm);
+  border:1px solid var(--border);background:var(--bg);color:var(--text);
+  font-family:inherit;font-size:12px;cursor:pointer;
+}
+.assign-select:focus{outline:none;border-color:var(--accent)}
+
+/* === BUTTONS === */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  padding:9px 18px;border-radius:var(--radius-sm);
+  font-size:14px;font-weight:600;
+  transition:var(--transition);cursor:pointer;border:none;
+  line-height:1;white-space:nowrap;
+}
+.btn:active{transform:scale(0.97)}
+.btn:disabled{opacity:0.5;cursor:not-allowed;transform:none!important}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-lg{padding:12px 28px;font-size:16px}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover:not(:disabled){background:#00245a}
+.btn-accent{background:var(--accent);color:#000}
+.btn-accent:hover:not(:disabled){background:#e09600}
+.btn-success{background:var(--success);color:#fff}
+.btn-success:hover:not(:disabled){background:#218838}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-danger:hover:not(:disabled){background:#c82333}
+.btn-outline{background:transparent;color:var(--text);border:1.5px solid var(--border)}
+.btn-outline:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.btn-ghost{background:transparent;color:var(--text-secondary)}
+.btn-ghost:hover:not(:disabled){background:var(--bg);color:var(--text)}
+.w-full{width:100%}
+
+/* === PROGRESS BARS === */
+.progress-bar-wrap{background:var(--border);border-radius:20px;height:8px;overflow:hidden;margin:4px 0}
+.progress-bar{height:100%;border-radius:20px;transition:width 0.5s ease;min-width:4px}
+.progress-bar.coins{background:linear-gradient(90deg,#F0A500,#FFD700)}
+.progress-bar.rep{background:linear-gradient(90deg,#003366,#2196F3)}
+.progress-bar.energy{background:linear-gradient(90deg,#28a745,#5cb85c)}
+.progress-bar.chaos{background:linear-gradient(90deg,#dc3545,#ff6b6b)}
+.progress-bar.knowledge{background:linear-gradient(90deg,#9C27B0,#E040FB)}
+
+/* === LEADERBOARD === */
+#leaderboard-container .lb-table{width:100%;border-collapse:collapse;font-size:14px}
+.lb-table th{padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid var(--border)}
+.lb-table td{padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+.lb-table tr:last-child td{border-bottom:none}
+.lb-table tr:hover td{background:rgba(240,165,0,0.05)}
+.player-row td{background:rgba(240,165,0,0.1)!important;font-weight:700}
+.player-row td:first-child{border-left:3px solid var(--accent)}
+.rank-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:28px;height:28px;border-radius:50%;font-weight:800;font-size:13px;
+}
+.rank-1{background:#FFD700;color:#000}
+.rank-2{background:#C0C0C0;color:#000}
+.rank-3{background:#CD7F32;color:#fff}
+.rank-other{background:var(--border);color:var(--text-secondary)}
+.prestige-stars{color:var(--accent);font-size:12px;letter-spacing:1px}
+.lb-name{font-weight:600;display:flex;align-items:center;gap:6px}
+.lb-you-badge{background:var(--accent);color:#000;font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px}
+
+/* === RAID LOG === */
+.raid-log-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px}
+.raid-log-table th{padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;border-bottom:2px solid var(--border)}
+.raid-log-table td{padding:10px 12px;border-bottom:1px solid var(--border)}
+.raid-success td:first-child{border-left:3px solid var(--success)}
+.raid-fail td:first-child{border-left:3px solid var(--danger)}
+.raid-defended td:first-child{border-left:3px solid var(--accent)}
+.raid-targets-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:10px}
+.raid-target-card{
+  background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:14px;transition:var(--transition);
+}
+.raid-target-card:hover{border-color:var(--primary);transform:translateY(-1px)}
+.raid-target-name{font-weight:700;font-size:14px;margin-bottom:6px}
+.raid-target-stats{font-size:12px;color:var(--text-secondary);margin-bottom:10px}
+.raid-cooldown{font-size:11px;color:var(--danger);font-weight:600;margin-top:6px}
+
+/* === QUEST CARDS === */
+.quests-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.quest-card{
+  background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px;position:relative;overflow:hidden;transition:var(--transition);
+}
+.quest-card:hover{box-shadow:var(--shadow-lg)}
+.quest-card.completed{border-color:var(--success);background:rgba(40,167,69,0.06)}
+.quest-card.completed::after{content:"✓";position:absolute;top:10px;right:12px;color:var(--success);font-size:20px;font-weight:800}
+.quest-name{font-weight:700;font-size:14px;margin-bottom:4px}
+.quest-desc{font-size:12px;color:var(--text-secondary);margin-bottom:10px}
+.quest-progress-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.quest-progress-text{font-size:12px;font-weight:600;color:var(--text-secondary)}
+.quest-reward{font-size:12px;color:var(--accent);font-weight:700}
+.quest-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+
+/* === ACHIEVEMENTS === */
+.achievements-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.achievement-badge{
+  background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px;text-align:center;transition:var(--transition);position:relative;
+}
+.achievement-badge.unlocked{border-color:var(--accent);background:rgba(240,165,0,0.06)}
+.achievement-badge.unlocked:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);animation:achievementPop 0.3s ease}
+.achievement-badge.locked{opacity:0.45;filter:grayscale(0.7)}
+.achievement-emoji{font-size:34px;margin-bottom:8px;display:block}
+.achievement-name{font-weight:700;font-size:13px;margin-bottom:4px}
+.achievement-desc{font-size:11px;color:var(--text-secondary)}
+.achievement-date{font-size:10px;color:var(--accent);margin-top:6px;font-weight:600}
+
+/* === SHOP === */
+.shop-packs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-bottom:24px}
+.pack-card{
+  background:var(--card-bg);border:2px solid var(--border);border-radius:var(--radius);
+  padding:20px;text-align:center;transition:var(--transition);cursor:pointer;
+}
+.pack-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+.pack-card.pack-common{border-color:#9e9e9e}
+.pack-card.pack-deluxe{border-color:#2196F3;box-shadow:0 0 12px rgba(33,150,243,0.15)}
+.pack-card.pack-legendary{border-color:#FFD700;box-shadow:0 0 16px rgba(255,215,0,0.25);animation:glow 2s infinite}
+.pack-emoji{font-size:48px;display:block;margin-bottom:12px}
+.pack-name{font-size:16px;font-weight:800;margin-bottom:6px}
+.pack-price{font-size:20px;font-weight:800;color:var(--accent);margin:10px 0}
+.pack-odds{font-size:11px;color:var(--text-secondary);line-height:1.6;margin-bottom:14px}
+.pack-odds span{display:block}
+.upgrade-cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.upgrade-card{
+  background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px;display:flex;align-items:flex-start;gap:14px;transition:var(--transition);
+}
+.upgrade-card:hover{box-shadow:var(--shadow-lg)}
+.upgrade-card.owned{border-color:var(--success);background:rgba(40,167,69,0.05)}
+.upgrade-emoji{font-size:30px;flex-shrink:0}
+.upgrade-info{flex:1}
+.upgrade-name{font-weight:700;font-size:14px;margin-bottom:4px}
+.upgrade-desc{font-size:12px;color:var(--text-secondary);margin-bottom:8px}
+.upgrade-reqs{font-size:11px;color:var(--text-secondary);margin-bottom:6px}
+.upgrade-owned-badge{background:var(--success);color:#fff;font-size:10px;font-weight:700;padding:2px 9px;border-radius:10px}
+
+/* === MODALS === */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.6);
+  display:flex;align-items:center;justify-content:center;
+  z-index:2000;padding:16px;
+  animation:fadeIn 0.15s ease;
+  backdrop-filter:blur(2px);
+}
+.modal-overlay.hidden{display:none!important}
+.modal{
+  background:var(--card-bg);border-radius:var(--radius);
+  padding:24px;max-width:560px;width:100%;
+  max-height:90vh;overflow-y:auto;
+  box-shadow:var(--shadow-lg);
+  animation:slideIn 0.2s ease;
+  position:relative;
+}
+.modal-sm{max-width:400px}
+.modal-lg{max-width:760px}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.modal-title{font-size:18px;font-weight:800;color:var(--text)}
+.modal-close{background:none;border:none;font-size:22px;color:var(--text-secondary);cursor:pointer;padding:4px;border-radius:4px;line-height:1}
+.modal-close:hover{color:var(--text);background:var(--bg)}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)}
+.building-grid-modal{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.building-option{
+  border:2px solid var(--border);border-radius:var(--radius-sm);padding:14px;
+  cursor:pointer;transition:var(--transition);text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+}
+.building-option:hover:not(.disabled){border-color:var(--accent);background:rgba(240,165,0,0.07);transform:scale(1.02)}
+.building-option.disabled{opacity:0.4;cursor:not-allowed}
+.building-option-emoji{font-size:30px}
+.building-option-name{font-weight:700;font-size:13px}
+.building-option-cost{font-size:12px;color:var(--accent);font-weight:700}
+.building-option-prod{font-size:11px;color:var(--text-secondary);text-align:center}
+
+/* === TEACHER REVEAL MODAL === */
+.reveal-card{
+  text-align:center;padding:30px 20px;
+  border-radius:var(--radius);
+}
+.reveal-card.common{background:linear-gradient(135deg,#e0e0e0,#f5f5f5)}
+.reveal-card.rare{background:linear-gradient(135deg,#e3f2fd,#bbdefb)}
+.reveal-card.epic{background:linear-gradient(135deg,#f3e5f5,#ce93d8)}
+.reveal-card.legendary{background:linear-gradient(135deg,#fff8e1,#FFD700)}
+.reveal-emoji{font-size:64px;display:block;margin-bottom:16px;animation:bounceIn 0.5s ease}
+.reveal-name{font-size:22px;font-weight:800;margin-bottom:4px}
+.reveal-subject{font-size:14px;color:var(--text-secondary);margin-bottom:12px}
+.reveal-perk{
+  background:rgba(0,0,0,0.07);border-radius:var(--radius-sm);padding:10px 14px;
+  font-size:13px;margin:14px 0;color:var(--text);
+}
+
+/* === BUILDING INFO MODAL === */
+.level-stars{color:var(--accent);font-size:18px;letter-spacing:2px}
+.binfo-prod-table{width:100%;font-size:13px;border-collapse:collapse;margin:8px 0}
+.binfo-prod-table td{padding:5px 10px;border-bottom:1px solid var(--border)}
+.binfo-prod-table tr:last-child td{border-bottom:none}
+
+/* === NOTIFICATIONS === */
+#notifications{
+  position:fixed;top:80px;right:16px;z-index:5000;
+  display:flex;flex-direction:column;gap:8px;
+  max-width:320px;min-width:260px;
+}
+.notification{
+  background:var(--card-bg);border-radius:var(--radius);
+  padding:12px 16px;box-shadow:var(--shadow-lg);
+  border-left:4px solid var(--success);
+  font-size:13px;font-weight:500;
+  animation:notifSlideIn 0.25s ease;
+  display:flex;align-items:flex-start;gap:10px;
+  position:relative;overflow:hidden;
+}
+.notification.error{border-left-color:var(--danger)}
+.notification.warning{border-left-color:var(--accent)}
+.notification.info{border-left-color:#2196F3}
+.notif-icon{font-size:18px;flex-shrink:0}
+.notif-body{flex:1}
+.notif-title{font-weight:700;font-size:12px;color:var(--text);margin-bottom:2px}
+.notif-msg{color:var(--text-secondary);font-size:12px}
+.notif-dismiss{
+  background:none;border:none;cursor:pointer;
+  color:var(--text-secondary);font-size:16px;padding:0;line-height:1;flex-shrink:0;
+}
+.notification.fade-out{animation:notifSlideOut 0.25s ease forwards}
+.notif-progress{
+  position:absolute;bottom:0;left:0;height:2px;
+  background:var(--success);animation:notifProgress 3s linear forwards;
+}
+.notification.error .notif-progress{background:var(--danger)}
+.notification.warning .notif-progress{background:var(--accent)}
+.notification.info .notif-progress{background:#2196F3}
+
+/* === CONFETTI === */
+#confetti-container{position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden}
+.confetti-piece{
+  position:absolute;width:10px;height:10px;
+  border-radius:2px;top:-10px;
+  animation:confettiFall linear forwards;
+}
+
+/* === TUTORIAL === */
+#tutorial-overlay{
+  position:fixed;inset:0;z-index:4000;pointer-events:none;
+  background:rgba(0,0,0,0.45);
+}
+#tutorial-overlay:not(.hidden){pointer-events:all}
+.tutorial-box{
+  position:absolute;
+  background:var(--card-bg);border-radius:var(--radius);
+  padding:18px 22px;max-width:300px;
+  box-shadow:var(--shadow-lg);border-left:4px solid var(--accent);
+  animation:slideIn 0.3s ease;
+}
+.tutorial-title{font-weight:800;font-size:15px;margin-bottom:6px;color:var(--text)}
+.tutorial-text{font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:14px}
+.tutorial-actions{display:flex;justify-content:space-between;align-items:center}
+.tutorial-step{font-size:11px;color:var(--text-secondary)}
+
+/* === QUOTE BAR === */
+#quote-bar{
+  position:fixed;bottom:0;left:var(--sidebar-width);right:0;
+  background:var(--primary);color:rgba(255,255,255,0.8);
+  padding:8px 20px;font-size:12px;z-index:800;
+  border-top:1px solid rgba(255,255,255,0.1);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font-style:italic;
+}
+
+/* === PRESTIGE === */
+.prestige-banner{
+  background:linear-gradient(135deg,var(--primary),#1a237e);
+  border-radius:var(--radius);padding:20px;margin-bottom:16px;
+  color:#fff;display:flex;align-items:center;gap:16px;
+  box-shadow:var(--shadow-lg);
+}
+.prestige-stars{font-size:24px;letter-spacing:2px}
+.prestige-info{flex:1}
+.prestige-title{font-size:18px;font-weight:800;margin-bottom:4px}
+.prestige-subtitle{font-size:13px;color:rgba(255,255,255,0.7)}
+
+/* === SETTINGS === */
+.settings-section{margin-bottom:24px}
+.settings-section-title{font-size:14px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.settings-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)}
+.settings-row:last-child{border-bottom:none}
+.settings-label{font-size:14px;font-weight:600;color:var(--text)}
+.settings-sub{font-size:12px;color:var(--text-secondary);margin-top:2px}
+.toggle-switch{position:relative;width:44px;height:24px;cursor:pointer}
+.toggle-switch input{opacity:0;width:0;height:0}
+.toggle-slider{
+  position:absolute;inset:0;background:var(--border);border-radius:24px;
+  transition:var(--transition);
+}
+.toggle-slider::before{
+  content:"";position:absolute;width:18px;height:18px;border-radius:50%;
+  left:3px;top:3px;background:#fff;transition:var(--transition);
+}
+input:checked + .toggle-slider{background:var(--accent)}
+input:checked + .toggle-slider::before{transform:translateX(20px)}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat-box{background:var(--bg);border-radius:var(--radius-sm);padding:12px 14px;text-align:center}
+.stat-box-val{font-size:20px;font-weight:800;color:var(--accent);display:block}
+.stat-box-label{font-size:11px;color:var(--text-secondary);margin-top:2px}
+
+/* === WELCOME MODAL === */
+.welcome-fish{text-align:center;margin-bottom:20px}
+.welcome-title{font-size:26px;font-weight:800;text-align:center;margin-bottom:6px;color:var(--text)}
+.welcome-sub{font-size:14px;color:var(--text-secondary);text-align:center;margin-bottom:20px}
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px}
+.form-input{
+  width:100%;padding:10px 14px;border-radius:var(--radius-sm);
+  border:1.5px solid var(--border);background:var(--bg);color:var(--text);
+  font-family:inherit;font-size:14px;transition:var(--transition);
+}
+.form-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(240,165,0,0.15)}
+
+/* === COIN FLOAT === */
+.coin-float{
+  position:fixed;pointer-events:none;z-index:9998;
+  font-size:14px;font-weight:800;color:var(--accent);
+  animation:coinFloat 1.2s ease forwards;
+  text-shadow:0 1px 3px rgba(0,0,0,0.4);
+}
+
+/* === FISH SWIM === */
+.fish-swim-elem{
+  position:fixed;z-index:9990;pointer-events:none;
+  font-size:32px;top:50%;
+  animation:fishSwim 3s linear forwards;
+}
+
+/* === DIVIDER === */
+.divider{height:1px;background:var(--border);margin:16px 0}
+
+/* === TAGS === */
+.tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.tag-info{background:rgba(33,150,243,0.12);color:#1565C0}
+.tag-success{background:rgba(40,167,69,0.12);color:var(--success)}
+.tag-danger{background:rgba(220,53,69,0.12);color:var(--danger)}
+.tag-warning{background:rgba(240,165,0,0.15);color:#a07000}
+.tag-primary{background:rgba(0,51,102,0.1);color:var(--primary)}
+[data-theme="dark"] .tag-info{background:rgba(33,150,243,0.2);color:#64b5f6}
+[data-theme="dark"] .tag-success{background:rgba(40,167,69,0.2);color:#69f0ae}
+[data-theme="dark"] .tag-warning{background:rgba(240,165,0,0.2);color:var(--accent)}
+[data-theme="dark"] .tag-primary{background:rgba(0,51,102,0.3);color:#90caf9}
+
+/* === HELPERS === */
+.hidden{display:none!important}
+.d-flex{display:flex}
+.align-center{align-items:center}
+.justify-between{justify-content:space-between}
+.gap-4{gap:4px}.gap-8{gap:8px}.gap-12{gap:12px}.gap-16{gap:16px}
+.mt-4{margin-top:4px}.mt-8{margin-top:8px}.mt-12{margin-top:12px}.mt-16{margin-top:16px}.mt-20{margin-top:20px}.mt-24{margin-top:24px}
+.mb-4{margin-bottom:4px}.mb-8{margin-bottom:8px}.mb-12{margin-bottom:12px}.mb-16{margin-bottom:16px}
+.text-center{text-align:center}
+.text-sm{font-size:12px}.text-xs{font-size:11px}
+.text-muted{color:var(--text-secondary)}
+.fw-bold{font-weight:700}.fw-800{font-weight:800}
+.text-accent{color:var(--accent)}
+.text-success{color:var(--success)}
+.text-danger{color:var(--danger)}
+.flex-1{flex:1}
+.w-full{width:100%}
+.overflow-hidden{overflow:hidden}
+
+/* === ANIMATIONS === */
+@keyframes coinBounce{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
+@keyframes buildingAppear{0%{opacity:0;transform:scale(0.7) translateY(8px)}100%{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.65}}
+@keyframes confettiFall{0%{top:-10px;opacity:1}100%{top:110vh;opacity:0.3}}
+@keyframes glow{0%,100%{box-shadow:0 0 8px rgba(255,215,0,0.3)}50%{box-shadow:0 0 20px rgba(255,215,0,0.6)}}
+@keyframes slideIn{0%{opacity:0;transform:translateY(-10px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes notifSlideIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+@keyframes notifSlideOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(40px)}}
+@keyframes notifProgress{from{width:100%}to{width:0%}}
+@keyframes coinFloat{0%{opacity:1;transform:translateY(0) scale(1)}80%{opacity:1;transform:translateY(-50px) scale(1.1)}100%{opacity:0;transform:translateY(-70px) scale(0.8)}}
+@keyframes fishSwim{0%{left:-60px;opacity:0}5%{opacity:1}90%{opacity:1}100%{left:110vw;opacity:0}}
+@keyframes legendaryBorder{0%{box-shadow:0 0 6px #FFD700;border-color:#FFD700}33%{box-shadow:0 0 12px #FF69B4;border-color:#FF69B4}66%{box-shadow:0 0 12px #9C27B0;border-color:#9C27B0}100%{box-shadow:0 0 6px #FFD700;border-color:#FFD700}}
+@keyframes achievementPop{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
+@keyframes bounceIn{0%{transform:scale(0.3);opacity:0}50%{transform:scale(1.1);opacity:1}70%{transform:scale(0.9)}100%{transform:scale(1)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes raidFlash{0%,100%{background:transparent}50%{background:rgba(220,53,69,0.15)}}
+
+/* === SIDEBAR OVERLAY (mobile) === */
+#sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:850}
+
+/* === MOBILE === */
+@media(max-width:768px){
+  #mobile-menu-btn{display:flex}
+  #sidebar{transform:translateX(-100%)}
+  #sidebar.open{transform:translateX(0)}
+  #sidebar-overlay.visible{display:block}
+  #main{margin-left:0;padding:16px;padding-bottom:60px}
+  #quote-bar{left:0}
+  #campus-grid{grid-template-columns:repeat(4,1fr)}
+  .campus-layout{grid-template-columns:1fr}
+  .campus-tile{min-height:60px}
+  .campus-tile .tile-emoji{font-size:20px}
+  .card-grid{grid-template-columns:1fr}
+  .staff-grid{grid-template-columns:1fr}
+  .shop-packs-grid{grid-template-columns:1fr}
+  .achievements-grid{grid-template-columns:repeat(2,1fr)}
+  .quests-grid{grid-template-columns:1fr}
+  .raid-targets-grid{grid-template-columns:1fr}
+  .stats-grid{grid-template-columns:1fr}
+  .building-grid-modal{grid-template-columns:1fr}
+  #resource-bar{gap:6px}
+  .resource-item{padding:3px 7px;font-size:12px}
+  .lb-table{font-size:12px}
+  .lb-table th,.lb-table td{padding:8px 8px}
+  .modal{padding:18px}
+  .prestige-banner{flex-direction:column;text-align:center}
+}
+@media(max-width:480px){
+  #campus-grid{grid-template-columns:repeat(3,1fr)}
+  .achievements-grid{grid-template-columns:1fr 1fr}
+  .resource-rate{display:none}
+  .player-badge span:first-child{display:none}
+}
+  </style>
+</head>
+<body>
+
+<!-- WELCOME MODAL -->
+<div id="welcome-modal" class="modal-overlay">
+  <div class="modal modal-sm">
+    <div class="welcome-fish">
+      <svg width="80" height="50" viewBox="0 0 80 50" fill="none">
+        <path d="M4 25 Q20 4 40 25 Q20 46 4 25Z" fill="#F0A500"/>
+        <path d="M36 14 L58 6 L52 25 L58 44 L36 36 Z" fill="#F0A500"/>
+        <circle cx="18" cy="23" r="3.5" fill="#003366"/>
+        <circle cx="19.2" cy="21.8" r="1.2" fill="white"/>
+      </svg>
+    </div>
+    <div class="welcome-title">Ichthus Tycoon 🏫</div>
+    <div class="welcome-sub">Bouw de beste school van Nederland!<br><small>Een spel voor Ichthus Lyceum</small></div>
+    <div class="form-group">
+      <label class="form-label" for="player-name-input">Jouw naam (of bijnaam):</label>
+      <input id="player-name-input" class="form-input" type="text" placeholder="bijv. Directeur Jansen" maxlength="24" autocomplete="off" aria-describedby="name-error"/>
+      <div id="name-error" role="alert" aria-live="polite" style="color:var(--danger);font-size:12px;margin-top:4px;min-height:16px"></div>
+    </div>
+    <button class="btn btn-accent btn-lg w-full" onclick="startNewGame()">🚀 Start het spel!</button>
+    <p style="text-align:center;font-size:11px;color:var(--text-secondary);margin-top:12px">Geen externe servers. Alles wordt lokaal opgeslagen.</p>
+  </div>
+</div>
+
+<!-- TUTORIAL OVERLAY -->
+<div id="tutorial-overlay" class="hidden">
+  <div id="tutorial-box" class="tutorial-box">
+    <div class="tutorial-title" id="tutorial-title">Welkom!</div>
+    <div class="tutorial-text" id="tutorial-text">Laten we beginnen.</div>
+    <div class="tutorial-actions">
+      <span class="tutorial-step" id="tutorial-step">Stap 1 / 4</span>
+      <button class="btn btn-accent btn-sm" onclick="nextTutorialStep()">Volgende →</button>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header id="header">
+  <div class="logo" onclick="handleLogoClick()" title="Ichthus Tycoon">
+    <svg width="36" height="22" viewBox="0 0 40 24" fill="none">
+      <path d="M2 12 Q10 2 20 12 Q10 22 2 12Z" fill="#F0A500"/>
+      <path d="M18 8 L28 4 L25 12 L28 20 L18 16 Z" fill="#F0A500"/>
+      <circle cx="9" cy="11" r="1.8" fill="#003366"/>
+      <circle cx="9.6" cy="10.4" r="0.6" fill="white"/>
+    </svg>
+    <div>
+      <span class="logo-title">Ichthus Tycoon</span>
+      <span class="logo-sub">Ichthus Lyceum</span>
+    </div>
+  </div>
+  <div id="resource-bar">
+    <div class="resource-item" title="Coins">
+      <span class="resource-icon">💰</span>
+      <span id="res-coins" class="resource-val">500</span>
+      <span id="res-coins-rate" class="resource-rate">(+0/s)</span>
+    </div>
+    <div class="resource-item" title="Reputatie">
+      <span class="resource-icon">⭐</span>
+      <span id="res-rep" class="resource-val">0</span>
+      <span id="res-rep-rate" class="resource-rate">(+0/s)</span>
+    </div>
+    <div class="resource-item" title="Energie">
+      <span class="resource-icon">⚡</span>
+      <span id="res-energy" class="resource-val">100</span>
+      <span class="resource-rate">/200</span>
+    </div>
+    <div class="resource-item" title="Chaos">
+      <span class="resource-icon">🔥</span>
+      <span id="res-chaos" class="resource-val">0</span>
+      <span class="resource-rate">/100</span>
+    </div>
+    <div class="resource-item" title="Kennis">
+      <span class="resource-icon">📚</span>
+      <span id="res-knowledge" class="resource-val">0</span>
+      <span id="res-knowledge-rate" class="resource-rate">(+0/s)</span>
+    </div>
+  </div>
+  <div class="header-actions">
+    <span id="booster-indicator">⚡ 2x BOOST</span>
+    <span id="shield-indicator">🛡️ SHIELD</span>
+    <div class="player-badge" id="player-badge">
+      <span>Speler</span>
+      <span class="prestige-star" id="prestige-display"></span>
+    </div>
+    <button id="dark-toggle" onclick="toggleDarkMode()" title="Donker/Licht modus">🌙</button>
+    <div id="auth-area" style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+      <button id="btn-login-google" class="btn btn-sm btn-accent">🔑 Login Google</button>
+      <button id="btn-login-ms" class="btn btn-sm btn-outline" style="color:#fff;border-color:rgba(255,255,255,0.4)">🪟 Login Microsoft</button>
+      <div id="auth-user" style="display:none" class="player-badge">
+        <span id="auth-name"></span>
+        <button id="btn-logout" class="btn btn-sm btn-ghost" style="color:#fff;font-size:11px">Uitloggen</button>
+      </div>
+    </div>
+    <button id="mobile-menu-btn" onclick="toggleSidebar()" title="Menu">☰</button>
+  </div>
+</header>
+
+<!-- SIDEBAR OVERLAY (mobile) -->
+<div id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="nav-section">Campusbeheer</div>
+  <div class="nav-item active" data-tab="campus" onclick="navigateTo('campus')">
+    <span class="nav-icon">🏫</span><span>Campus</span>
+    <span class="nav-badge gold" id="nav-badge-campus" style="display:none"></span>
+  </div>
+  <div class="nav-item" data-tab="docenten" onclick="navigateTo('docenten')">
+    <span class="nav-icon">👥</span><span>Docenten</span>
+    <span class="nav-badge" id="nav-badge-docenten" style="display:none"></span>
+  </div>
+  <div class="nav-item" data-tab="upgrades" onclick="navigateTo('upgrades')">
+    <span class="nav-icon">⬆️</span><span>Upgrades</span>
+  </div>
+  <div class="nav-section">Sociaal</div>
+  <div class="nav-item" data-tab="leaderboard" onclick="navigateTo('leaderboard')">
+    <span class="nav-icon">🏆</span><span>Leaderboard</span>
+  </div>
+  <div class="nav-item" data-tab="raids" onclick="navigateTo('raids')">
+    <span class="nav-icon">⚔️</span><span>Raids</span>
+    <span class="nav-badge" id="nav-badge-raids" style="display:none"></span>
+  </div>
+  <div class="nav-section">Voortgang</div>
+  <div class="nav-item" data-tab="quests" onclick="navigateTo('quests')">
+    <span class="nav-icon">📋</span><span>Quests</span>
+    <span class="nav-badge gold" id="nav-badge-quests" style="display:none"></span>
+  </div>
+  <div class="nav-item" data-tab="achievements" onclick="navigateTo('achievements')">
+    <span class="nav-icon">🏅</span><span>Prestaties</span>
+    <span class="nav-badge gold" id="nav-badge-achievements" style="display:none"></span>
+  </div>
+  <div class="nav-section">Overig</div>
+  <div class="nav-item" data-tab="shop" onclick="navigateTo('shop')">
+    <span class="nav-icon">🛒</span><span>Shop</span>
+  </div>
+  <div class="nav-item" data-tab="settings" onclick="navigateTo('settings')">
+    <span class="nav-icon">⚙️</span><span>Instellingen</span>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main id="main">
+
+  <!-- CAMPUS TAB -->
+  <div class="tab-content active" data-tab="campus">
+    <div class="page-header">
+      <h2 class="page-title">🏫 Mijn Campus</h2>
+      <p class="page-subtitle">Bouw en beheer je schoolcampus</p>
+    </div>
+    <div id="active-events-bar" class="active-events-bar"></div>
+    <div class="campus-layout">
+      <div>
+        <div id="campus-grid-wrap" class="card">
+          <div class="card-title">Campus Overzicht <span id="building-count" class="tag tag-info">0 / 36</span></div>
+          <div id="campus-grid"></div>
+        </div>
+        <div id="production-summary" class="card mt-16">
+          <div class="card-title">📊 Productie per Seconde</div>
+          <div id="production-details"></div>
+        </div>
+      </div>
+      <div class="campus-sidebar">
+        <div class="card" id="selected-building-panel">
+          <div class="card-title">ℹ️ Info</div>
+          <p class="text-muted text-sm">Klik op een gebouw of leeg vak voor meer informatie.</p>
+        </div>
+        <div class="card mt-16">
+          <div class="card-title">⚡ Snelle Acties</div>
+          <button class="btn btn-accent w-full mb-8" onclick="navigateTo('shop')">🛒 Docenten Kopen</button>
+          <button class="btn btn-outline w-full" onclick="navigateTo('upgrades')">⬆️ Upgrades</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DOCENTEN TAB -->
+  <div class="tab-content" data-tab="docenten">
+    <div class="page-header">
+      <h2 class="page-title">👥 Docenten</h2>
+      <p class="page-subtitle" id="staff-count-text">Je hebt nog geen docenten</p>
+    </div>
+    <div id="staff-grid" class="staff-grid"></div>
+    <div id="no-staff-msg" class="text-center mt-20">
+      <div style="font-size:56px;margin-bottom:12px">🧑‍🏫</div>
+      <p class="text-muted mb-12">Je hebt nog geen docenten. Koop ze in de Shop!</p>
+      <button class="btn btn-accent" onclick="navigateTo('shop')">→ Naar Shop</button>
+    </div>
+  </div>
+
+  <!-- SHOP TAB -->
+  <div class="tab-content" data-tab="shop">
+    <div class="page-header">
+      <h2 class="page-title">🛒 Shop</h2>
+      <p class="page-subtitle">Koop docenten pakketten en power-ups</p>
+    </div>
+    <div class="card mb-16">
+      <div class="card-title">🎴 Docenten Pakketten</div>
+      <p class="text-muted text-sm mb-16">Open pakketten om docenten te ontgrendelen. Elke docent heeft unieke perks!</p>
+      <div class="shop-packs-grid">
+        <div class="pack-card pack-common">
+          <span class="pack-emoji">📦</span>
+          <div class="pack-name">Gewoon Pakket</div>
+          <div class="pack-price">💰 200</div>
+          <div class="pack-odds">
+            <span>⬜ Gewoon: 70%</span>
+            <span>🔵 Zeldzaam: 25%</span>
+            <span>🟣 Episch: 5%</span>
+          </div>
+          <button class="btn btn-outline w-full" onclick="openTeacherPack('common')">Kopen</button>
+        </div>
+        <div class="pack-card pack-deluxe">
+          <span class="pack-emoji">🎁</span>
+          <div class="pack-name">Deluxe Pakket</div>
+          <div class="pack-price">💰 500</div>
+          <div class="pack-odds">
+            <span>⬜ Gewoon: 40%</span>
+            <span>🔵 Zeldzaam: 40%</span>
+            <span>🟣 Episch: 18%</span>
+            <span>🌟 Legendair: 2%</span>
+          </div>
+          <button class="btn btn-primary w-full" onclick="openTeacherPack('deluxe')">Kopen</button>
+        </div>
+        <div class="pack-card pack-legendary">
+          <span class="pack-emoji">👑</span>
+          <div class="pack-name">Legendarisch Pakket</div>
+          <div class="pack-price">💰 1500</div>
+          <div class="pack-odds">
+            <span>⬜ Gewoon: 10%</span>
+            <span>🔵 Zeldzaam: 30%</span>
+            <span>�� Episch: 40%</span>
+            <span>🌟 Legendair: 20%</span>
+          </div>
+          <button class="btn btn-accent w-full" onclick="openTeacherPack('legendary')">Kopen</button>
+        </div>
+      </div>
+    </div>
+    <div class="card mb-16">
+      <div class="card-title">⚡ Power-ups</div>
+      <div class="upgrade-cards-grid">
+        <div class="upgrade-card">
+          <div class="upgrade-emoji">⚡</div>
+          <div class="upgrade-info">
+            <div class="upgrade-name">2x Productie Boost</div>
+            <div class="upgrade-desc">Verdubbelt alle productie voor 60 seconden</div>
+            <div class="upgrade-reqs">Kosten: 💰 300</div>
+            <button class="btn btn-accent btn-sm mt-8" onclick="buyBooster()">Activeren</button>
+          </div>
+        </div>
+        <div class="upgrade-card">
+          <div class="upgrade-emoji">🛡️</div>
+          <div class="upgrade-info">
+            <div class="upgrade-name">Raid Schild</div>
+            <div class="upgrade-desc">Beschermt je school tegen raids voor 5 minuten</div>
+            <div class="upgrade-reqs">Kosten: 💰 200</div>
+            <button class="btn btn-success btn-sm mt-8" onclick="buyShield()">Activeren</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📚 Collectie voortgang</div>
+      <div id="collection-progress-bar" class="mt-8"></div>
+    </div>
+  </div>
+
+  <!-- LEADERBOARD TAB -->
+  <div class="tab-content" data-tab="leaderboard">
+    <div class="page-header">
+      <h2 class="page-title">🏆 Leaderboard</h2>
+      <p class="page-subtitle">Ichthus Lyceum — Alle spelers</p>
+    </div>
+    <div class="card">
+      <div id="leaderboard-container"></div>
+    </div>
+  </div>
+
+  <!-- RAIDS TAB -->
+  <div class="tab-content" data-tab="raids">
+    <div class="page-header">
+      <h2 class="page-title">⚔️ Raids</h2>
+      <p class="page-subtitle">Raid andere scholen voor extra coins</p>
+    </div>
+    <div id="raids-container"></div>
+  </div>
+
+  <!-- QUESTS TAB -->
+  <div class="tab-content" data-tab="quests">
+    <div class="page-header">
+      <h2 class="page-title">📋 Dagelijkse Quests <span style="font-size:13px;font-weight:400;color:var(--text-secondary)">(reset elke 5 min)</span></h2>
+      <p class="page-subtitle" id="quest-reset-text">Reset over: —</p>
+    </div>
+    <div id="quests-container" class="quests-grid"></div>
+  </div>
+
+  <!-- ACHIEVEMENTS TAB -->
+  <div class="tab-content" data-tab="achievements">
+    <div class="page-header">
+      <h2 class="page-title">🏅 Prestaties</h2>
+      <p class="page-subtitle" id="achievement-count-text">0 / 0 ontgrendeld</p>
+    </div>
+    <div id="achievements-container" class="achievements-grid"></div>
+  </div>
+
+  <!-- UPGRADES TAB -->
+  <div class="tab-content" data-tab="upgrades">
+    <div class="page-header">
+      <h2 class="page-title">⬆️ Upgrades</h2>
+      <p class="page-subtitle">Verbeter je gebouwen en campus</p>
+    </div>
+    <div id="upgrades-container"></div>
+  </div>
+
+  <!-- SETTINGS TAB -->
+  <div class="tab-content" data-tab="settings">
+    <div class="page-header">
+      <h2 class="page-title">⚙️ Instellingen</h2>
+    </div>
+    <div id="settings-container"></div>
+  </div>
+
+</main>
+
+<!-- NOTIFICATIONS -->
+<div id="notifications"></div>
+<!-- CONFETTI -->
+<div id="confetti-container"></div>
+<!-- QUOTE BAR -->
+<div id="quote-bar">📣 Welkom bij Ichthus Tycoon! Bouw je school!</div>
+
+<!-- BUILDING PLACEMENT MODAL -->
+<div id="building-modal" class="modal-overlay hidden">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title">🏗️ Gebouw Plaatsen</div>
+      <button class="modal-close" onclick="closeModal('building-modal')">✕</button>
+    </div>
+    <p class="text-muted text-sm mb-16">Kies een gebouw voor dit vakje. Grijs = niet beschikbaar.</p>
+    <div id="building-grid-modal" class="building-grid-modal"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('building-modal')">Annuleren</button>
+    </div>
+  </div>
+</div>
+
+<!-- BUILDING INFO MODAL -->
+<div id="building-info-modal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="binfo-title">Gebouw Info</div>
+      <button class="modal-close" onclick="closeModal('building-info-modal')">✕</button>
+    </div>
+    <div id="binfo-content"></div>
+    <div class="modal-footer" id="binfo-footer"></div>
+  </div>
+</div>
+
+<!-- TEACHER REVEAL MODAL -->
+<div id="teacher-reveal-modal" class="modal-overlay hidden">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div class="modal-title">✨ Nieuwe Docent!</div>
+      <button class="modal-close" onclick="closeModal('teacher-reveal-modal')">✕</button>
+    </div>
+    <div id="teacher-reveal-content"></div>
+    <div class="modal-footer">
+      <button class="btn btn-accent w-full" onclick="closeModal('teacher-reveal-modal')">Top! 🎉</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div id="confirm-modal" class="modal-overlay hidden">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div class="modal-title" id="confirm-title">Weet je het zeker?</div>
+      <button class="modal-close" onclick="closeModal('confirm-modal')">✕</button>
+    </div>
+    <p id="confirm-text" class="text-muted text-sm mb-16"></p>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('confirm-modal')">Annuleren</button>
+      <button class="btn btn-danger" id="confirm-ok-btn">Bevestigen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+// ============================================================
+// FIREBASE SETUP
+// Firestore security rules (for reference):
+// rules_version = '2';
+// service cloud.firestore {
+//   match /databases/{database}/documents {
+//     match /leaderboard/{userId} {
+//       allow read: if true;
+//       allow write: if request.auth != null && request.auth.uid == userId;
+//     }
+//   }
+// }
+// ============================================================
+const firebaseConfig = {
+  apiKey: "AIzaSyCFivXcysh3NVs3jd4Gj4ne6vZ3yv3mTss",
+  authDomain: "ichthus-tycoon.firebaseapp.com",
+  projectId: "ichthus-tycoon",
+  storageBucket: "ichthus-tycoon.firebasestorage.app",
+  messagingSenderId: "1007841871474",
+  appId: "1:1007841871474:web:e9dbc2f0e61d40fad7e4eb",
+  measurementId: "G-7T8HEW66VH"
+};
+firebase.initializeApp(firebaseConfig);
+const fbAuth = firebase.auth();
+const fbDb = firebase.firestore();
+let fbLeaderboardUnsubscribe = null;
+
+// ============================================================
+// GAME CONSTANTS
+// ============================================================
+const PRESTIGE_REP_REQUIREMENT = 10000;
+const QUEST_RESET_INTERVAL_MS = 300000; // 5 minutes
+const EVENT_TRIGGER_CHANCE = 0.01;      // 1% per tick
+const LOGO_EASTER_EGG_CLICKS = 5;
+const MAX_ENERGY = 200;
+const BASE_MAX_CHAOS = 100;
+const ANTICHAOS_MAX = 50;
+
+// ============================================================
+// DATA CONSTANTS
+// ============================================================
+const BUILDINGS = [
+  { id:'lokaal', name:'Lokaal', emoji:'🏫', cost:100,
+    production:{rep:5,knowledge:2}, maxCount:6,
+    description:'Een klassiek klaslokaal voor je leerlingen',
+    upgradeCost:[200,400,800,1600], upgradeMultiplier:2 },
+  { id:'kantine', name:'Kantine', emoji:'🍽️', cost:150,
+    production:{coins:10,chaos:-3}, maxCount:2,
+    description:'Houd je leerlingen gevoed en tevreden',
+    upgradeCost:[300,600,1200,2400], upgradeMultiplier:2 },
+  { id:'mediatheek', name:'Mediatheek', emoji:'📚', cost:200,
+    production:{knowledge:8,rep:3}, maxCount:2,
+    description:'Kennis is macht!',
+    upgradeCost:[400,800,1600,3200], upgradeMultiplier:2 },
+  { id:'gymzaal', name:'Gymzaal', emoji:'🏃', cost:175,
+    production:{energy:5,chaos:-3}, maxCount:2,
+    description:'Een gezond lichaam, een gezonde geest',
+    upgradeCost:[350,700,1400,2800], upgradeMultiplier:2 },
+  { id:'ictlab', name:'ICT-Lab', emoji:'💻', cost:300,
+    production:{coins:15,knowledge:5}, maxCount:2,
+    description:'De toekomst begint hier',
+    upgradeCost:[600,1200,2400,4800], upgradeMultiplier:2 },
+  { id:'aula', name:'Aula', emoji:'🎭', cost:250,
+    production:{rep:20}, maxCount:1,
+    description:'Voor grote evenementen en aankondigingen',
+    upgradeCost:[500,1000,2000,4000], upgradeMultiplier:2 },
+  { id:'concierge', name:'Conciërgekamer', emoji:'🔑', cost:120,
+    production:{}, maxCount:1, defense:50,
+    description:'Beschermt tegen raiders — Jan is altijd wakker',
+    upgradeCost:[240,480,960,1920], upgradeMultiplier:2 },
+  { id:'rector', name:'Rector-kantoor', emoji:'👔', cost:500,
+    production:{}, maxCount:1, repMultiplier:2,
+    description:'Verdubbelt je REP productie',
+    upgradeCost:[1000,2000,4000,8000], upgradeMultiplier:2 },
+  { id:'sportveld', name:'Sportveld', emoji:'⚽', cost:220,
+    production:{energy:8}, maxCount:2,
+    description:'Buiten sporten voor extra energie',
+    upgradeCost:[440,880,1760,3520], upgradeMultiplier:2 },
+  { id:'toiletten', name:'Toiletten', emoji:'🚽', cost:80,
+    production:{chaos:-2}, maxCount:3,
+    description:'Essentieel voor een goed functionerende school. Echt.',
+    upgradeCost:[160,320,640,1280], upgradeMultiplier:2 },
+  { id:'fietsenstalling', name:'Fietsenstalling', emoji:'🚲', cost:90,
+    production:{coins:3}, maxCount:2,
+    description:'Nederlandse leerlingen fietsen altijd — weer of geen weer',
+    upgradeCost:[180,360,720,1440], upgradeMultiplier:2 },
+  { id:'kluisjes', name:'Kluisjesgang', emoji:'🔒', cost:130,
+    production:{}, maxCount:2, coinProtection:0.3,
+    description:'Beschermt 30% van je coins bij raids',
+    upgradeCost:[260,520,1040,2080], upgradeMultiplier:2 },
+];
+
+const TEACHERS = [
+  { id:'midas', name:'Midas Koops', subject:'Wiskunde', emoji:'📐', rarity:'legendary',
+    stats:{inspiratie:9,strengheid:7,efficientie:10,humor:5},
+    perk:'Exacte wetenschap: +30% Kennis productie', perkId:'knowledge_boost_30',
+    quote:'Zonder wiskunde is het leven een vergelijking zonder oplossing.' },
+  { id:'vera', name:'Vera Jonker', subject:'Biologie', emoji:'🌿', rarity:'epic',
+    stats:{inspiratie:8,strengheid:6,efficientie:7,humor:7},
+    perk:'Natuur: Gymzaal +2x Energie', perkId:'gymzaal_energy_2x',
+    quote:'De natuur is het beste laboratorium.' },
+  { id:'cindy', name:'Cindy Garcia-Müller', subject:'Engels', emoji:'🇬🇧', rarity:'rare',
+    stats:{inspiratie:7,strengheid:5,efficientie:8,humor:8},
+    perk:'International: +15% REP bij events', perkId:'event_rep_15',
+    quote:'To be or not to be, dat is de vraag.' },
+  { id:'thomas', name:'Thomas de Vries', subject:'Nederlands', emoji:'📝', rarity:'common',
+    stats:{inspiratie:5,strengheid:7,efficientie:6,humor:4},
+    perk:'Taalvaardig: Mediatheek +10% Kennis', perkId:'mediatheek_knowledge_10',
+    quote:'Het schrift is machtiger dan het zwaard.' },
+  { id:'erik', name:'Erik Bakker', subject:'Geschiedenis', emoji:'📜', rarity:'common',
+    stats:{inspiratie:6,strengheid:6,efficientie:7,humor:6},
+    perk:'Tijdreiziger: Kennis +5/tick', perkId:'knowledge_5_tick',
+    quote:'Wie het verleden vergeet, is gedoemd het te herhalen.' },
+  { id:'sandra', name:'Sandra van den Berg', subject:'Aardrijkskunde', emoji:'🌍', rarity:'rare',
+    stats:{inspiratie:7,strengheid:5,efficientie:8,humor:6},
+    perk:'Wereldkennis: +10 REP/tick', perkId:'rep_10_tick',
+    quote:'De wereld is groot, maar Ichthus is groter.' },
+  { id:'arjan', name:'Arjan Smit', subject:'Scheikunde', emoji:'⚗️', rarity:'epic',
+    stats:{inspiratie:8,strengheid:4,efficientie:9,humor:7},
+    perk:'Explosief: ICT-Lab +50% productie', perkId:'ictlab_50',
+    quote:'H2O? Meer zoals H2-Whoa!' },
+  { id:'lotte', name:'Lotte Jansen', subject:'Natuurkunde', emoji:'⚛️', rarity:'epic',
+    stats:{inspiratie:9,strengheid:6,efficientie:8,humor:7},
+    perk:'Energie: alle gebouwen +1 Energie', perkId:'all_energy_1',
+    quote:'F=ma, dus werk harder!' },
+  { id:'mark', name:'Mark Willems', subject:'Economie', emoji:'📊', rarity:'rare',
+    stats:{inspiratie:6,strengheid:7,efficientie:9,humor:5},
+    perk:'Cash flow: +20% Coins productie', perkId:'coins_20',
+    quote:'Supply and demand, leerlingen. Vandaag vraag ik aandacht.' },
+  { id:'petra', name:'Petra van Dijk', subject:'Kunst & Cultuur', emoji:'🎨', rarity:'common',
+    stats:{inspiratie:10,strengheid:3,efficientie:5,humor:9},
+    perk:'Creativiteit: Aula +3x REP', perkId:'aula_rep_3x',
+    quote:"Kunst is alles wat je moeder niet begrijpt." },
+  { id:'jan', name:'Conciërge Jan', subject:'Conciërge', emoji:'🔑', rarity:'legendary',
+    stats:{inspiratie:3,strengheid:10,efficientie:10,humor:8},
+    perk:'Bewaker: raids 80% minder effectief', perkId:'raid_defense_80',
+    quote:'Ik heb de sleutels. Ik heb de macht.' },
+  { id:'rector_h', name:'Rector Hendricks', subject:'Directie', emoji:'👔', rarity:'legendary',
+    stats:{inspiratie:8,strengheid:9,efficientie:9,humor:6},
+    perk:'Autoriteit: alle stats +15%', perkId:'all_stats_15',
+    quote:'In mijn school volgen we de regels. Altijd.' },
+  { id:'freek', name:'Freek Mulder', subject:'Muziek', emoji:'🎵', rarity:'common',
+    stats:{inspiratie:9,strengheid:4,efficientie:6,humor:9},
+    perk:'Harmonie: Chaos -3/tick', perkId:'chaos_minus_3',
+    quote:'Do Re Mi... Do Re betaal je schoolgeld.' },
+  { id:'diana', name:'Diana Scholten', subject:'Filosofie', emoji:'🤔', rarity:'rare',
+    stats:{inspiratie:8,strengheid:5,efficientie:7,humor:7},
+    perk:'Wijsheid: Kennis +8/tick', perkId:'knowledge_8_tick',
+    quote:'Ik denk, dus ik geef les.' },
+  { id:'bas', name:'Bas de Jong', subject:'Informatica', emoji:'💾', rarity:'epic',
+    stats:{inspiratie:7,strengheid:6,efficientie:10,humor:6},
+    perk:'Hacker: ICT-Lab +25% productie', perkId:'ictlab_25',
+    quote:'sudo geef_me_goede_cijfers' },
+  { id:'iris', name:'Iris Visser', subject:'Frans', emoji:'🥐', rarity:'common',
+    stats:{inspiratie:7,strengheid:5,efficientie:6,humor:7},
+    perk:"Savoir-faire: REP +5/tick", perkId:'rep_5_tick',
+    quote:"C'est la vie scolaire!" },
+  { id:'willem', name:'Willem Brouwer', subject:'Duits', emoji:'🦅', rarity:'common',
+    stats:{inspiratie:6,strengheid:8,efficientie:7,humor:5},
+    perk:'Ordnung: Chaos -2/tick', perkId:'chaos_minus_2',
+    quote:'Ordnung muss sein!' },
+  { id:'noor', name:'Noor Hofman', subject:'Maatschappijleer', emoji:'🤝', rarity:'rare',
+    stats:{inspiratie:8,strengheid:5,efficientie:7,humor:8},
+    perk:'Solidariteit: Energie +5/tick', perkId:'energy_5_tick',
+    quote:'Samen staan we sterk, tenzij er een tentamen is.' },
+  { id:'koen', name:'Koen Timmermans', subject:'Lichamelijke Opvoeding', emoji:'🏅', rarity:'common',
+    stats:{inspiratie:7,strengheid:8,efficientie:7,humor:8},
+    perk:'Sportiviteit: Gymzaal +50%', perkId:'gymzaal_50',
+    quote:'Tien rondjes om het veld. Nu meteen!' },
+  { id:'anouk', name:'Anouk de Groot', subject:'Drama', emoji:'🎭', rarity:'rare',
+    stats:{inspiratie:10,strengheid:4,efficientie:6,humor:10},
+    perk:'Spotlicht: Aula +20 REP/tick', perkId:'aula_rep_20',
+    quote:'Het leven is een toneelstuk. En ik ben de regisseur.' },
+];
+
+const EVENTS = [
+  { id:'toetsweek', name:'Toetsweek 📋', effect:'toetsweek',
+    description:'Chaos +20, maar Kennis +50 als je een Mediatheek hebt!' },
+  { id:'opendag', name:'Open Dag 🎉', effect:'opendag',
+    description:'REP +100 als je een Aula hebt!' },
+  { id:'sportdag', name:'Sportdag ⚽', effect:'sportdag',
+    description:'Energie +50 als je een Gymzaal hebt!' },
+  { id:'wifi', name:'WiFi Storing 🔥', effect:'wifi_fail',
+    description:'ICT-Lab productie gehalveerd voor 30 seconden!' },
+  { id:'docentziek', name:'Docent Ziek 🤧', effect:'teacher_sick',
+    description:'Een willekeurige docent is tijdelijk inactief!' },
+  { id:'schoolfeest', name:'Schoolfeest 🎭', effect:'schoolfeest',
+    description:'REP +200! Feest op de campus!' },
+  { id:'schoolkrant', name:'Schoolkrant 📰', effect:'schoolkrant',
+    description:'De schoolkrant schrijft positief! REP +50' },
+  { id:'inspectie', name:'Inspectie 🏆', effect:'inspectie',
+    description:'Chaos moet onder 30 zijn of -500 REP!' },
+  { id:'regen', name:'Regen ☔', effect:'regen',
+    description:'Sportveld inactief voor 60 seconden.' },
+  { id:'afstuderen', name:'Afstuderen 🎓', effect:'afstuderen',
+    description:'Grote REP bonus bij afstudering!' },
+];
+
+const ACHIEVEMENTS = [
+  { id:'first_lokaal', name:'Eerste Lokaal', emoji:'🥇',
+    description:'Bouw je eerste lokaal',
+    check: gs => gs.buildings.some(b => b.id === 'lokaal') },
+  { id:'campus_beginner', name:'Campus Beginner', emoji:'🏗️',
+    description:'Bouw 5 gebouwen',
+    check: gs => gs.buildings.length >= 5 },
+  { id:'echte_campus', name:'Echte Campus', emoji:'🏛️',
+    description:'Bouw 10 gebouwen',
+    check: gs => gs.buildings.length >= 10 },
+  { id:'campus_koning', name:'Campus Koning', emoji:'👑',
+    description:'Bouw 15+ gebouwen',
+    check: gs => gs.buildings.length >= 15 },
+  { id:'rijkste_leerling', name:'Rijkste Leerling', emoji:'💰',
+    description:'Verdien 10.000 coins totaal',
+    check: gs => gs.totalCoinsEarned >= 10000 },
+  { id:'rep_machine', name:'REP Machine', emoji:'⭐',
+    description:'Bereik 5.000 REP',
+    check: gs => gs.rep >= 5000 },
+  { id:'docenten_verzamelaar', name:'Docenten Verzamelaar', emoji:'🧑‍🏫',
+    description:'Verzamel 5 docenten',
+    check: gs => gs.staff.length >= 5 },
+  { id:'directeur', name:'Directeur', emoji:'🎓',
+    description:'Heb 3 gebouwen op level 3+',
+    check: gs => gs.buildings.filter(b => b.level >= 3).length >= 3 },
+  { id:'onbreekbaar', name:'Onbreekbaar', emoji:'🔒',
+    description:'Weerstaan aan 3 raids',
+    check: gs => gs.raidDefenseCount >= 3 },
+  { id:'raider', name:'Raider', emoji:'⚔️',
+    description:'Voer 5 succesvolle raids uit',
+    check: gs => gs.successfulRaids >= 5 },
+  { id:'eerste_docent', name:'Eerste Docent', emoji:'🍎',
+    description:'Huur je eerste docent in',
+    check: gs => gs.staff.length >= 1 },
+  { id:'prestige_1', name:'Prestige I', emoji:'✨',
+    description:'Prestigieuzen voor het eerst',
+    check: gs => gs.prestige >= 1 },
+  { id:'kennis_master', name:'Kennis Master', emoji:'📖',
+    description:'Bereik 1000 Kennis',
+    check: gs => gs.knowledge >= 1000 },
+];
+
+const FAKE_PLAYERS = [
+  { id:'player_1', name:'Daan Vermeer', rep:8450, buildings:9, staff:7, prestige:1 },
+  { id:'player_2', name:'Emma Westerhof', rep:7200, buildings:8, staff:6, prestige:0 },
+  { id:'player_3', name:'Lars Kok', rep:6800, buildings:10, staff:5, prestige:1 },
+  { id:'player_4', name:'Sophie Hendriks', rep:5900, buildings:7, staff:8, prestige:0 },
+  { id:'player_5', name:'Tim de Boer', rep:5400, buildings:6, staff:4, prestige:0 },
+  { id:'player_6', name:'Julia Maas', rep:4800, buildings:8, staff:6, prestige:0 },
+  { id:'player_7', name:'Finn Kuipers', rep:4200, buildings:5, staff:3, prestige:0 },
+  { id:'player_8', name:'Nathalie Oost', rep:3700, buildings:7, staff:5, prestige:0 },
+  { id:'player_9', name:'Stijn Nieuwenhuis', rep:3200, buildings:4, staff:4, prestige:0 },
+  { id:'player_10', name:'Fleur van Leeuwen', rep:2900, buildings:6, staff:3, prestige:0 },
+  { id:'player_11', name:'Bram Dijkstra', rep:2400, buildings:5, staff:2, prestige:0 },
+  { id:'player_12', name:'Lena Peters', rep:2000, buildings:4, staff:3, prestige:0 },
+  { id:'player_13', name:'Max Gerritsen', rep:1700, buildings:3, staff:2, prestige:0 },
+  { id:'player_14', name:'Amy Huisman', rep:1400, buildings:3, staff:2, prestige:0 },
+  { id:'player_15', name:'Joost van der Laan', rep:1100, buildings:2, staff:1, prestige:0 },
+  { id:'player_16', name:'Roos Bergman', rep:850, buildings:2, staff:1, prestige:0 },
+  { id:'player_17', name:'Kevin Schut', rep:600, buildings:1, staff:1, prestige:0 },
+  { id:'player_18', name:'Merel Postma', rep:350, buildings:1, staff:0, prestige:0 },
+  { id:'player_19', name:'Jesse van Vliet', rep:150, buildings:1, staff:0, prestige:0 },
+];
+
+const SPECIAL_UPGRADES = [
+  { id:'wifi', name:'Snelle WiFi', emoji:'📶', cost:500, knowledgeReq:100,
+    description:'ICT-Lab productie +100%' },
+  { id:'printers', name:'Betere Printers', emoji:'🖨️', cost:300, knowledgeReq:80,
+    description:'Mediatheek +50% Kennis productie' },
+  { id:'biokantine', name:'Bio-Kantine', emoji:'🥗', cost:400, knowledgeReq:120,
+    description:'Chaos -10 per tick' },
+  { id:'solar', name:'Zonnepanelen', emoji:'☀️', cost:600, knowledgeReq:150,
+    description:'Gratis +5 Energie per tick' },
+  { id:'antichaos', name:'Anti-Chaos Protocol', emoji:'🛡️', cost:800, knowledgeReq:200,
+    description:'Maximum Chaos verlaagd naar 50' },
+];
+
+// ============================================================
+// GAME STATE
+// ============================================================
+let gameState = {
+  playerName:'',
+  coins:500,
+  rep:0,
+  energy:100,
+  chaos:0,
+  knowledge:0,
+  canteenSupply:100,
+  buildings:[],
+  staff:[],
+  achievements:[],
+  quests:{
+    daily:{
+      build3:{ progress:0, goal:3, completed:false, reward:200, name:'Bouw 3 gebouwen', desc:'Bouw 3 gebouwen op je campus' },
+      earn500rep:{ progress:0, goal:500, completed:false, reward:100, name:'Verdien 500 REP', desc:'Verzamel 500 REP punten' },
+      chaosLow:{ progress:0, goal:60, completed:false, reward:150, name:'Houd Chaos laag (60s)', desc:'Houd Chaos onder 20 voor 60 seconden' },
+      buyPack:{ progress:0, goal:1, completed:false, reward:250, name:'Koop een docentenpakket', desc:'Open een pakket in de Shop' }
+    },
+    lastReset: Date.now()
+  },
+  raidLog:[],
+  prestige:0,
+  totalPlayTime:0,
+  totalCoinsEarned:500,
+  successfulRaids:0,
+  raidDefenseCount:0,
+  lastSave:null,
+  shield:0,
+  raidCooldowns:{},
+  raidsToday:0,
+  dayStart:Date.now(),
+  specialUpgrades:[],
+  activeEvents:[],
+  booster:0,
+  tutorialStep:0,
+  tutorialDone:false,
+  leaderboard: JSON.parse(JSON.stringify(FAKE_PLAYERS)),
+  tickCount:0,
+  recentEventIds:[],
+  sickTeacher:null,
+  sickUntil:0,
+  disabledBuildings:{},
+  logoClickCount:0,
+  achievementDates:{},
+};
+
+let currentTab = 'campus';
+let tickInterval = null;
+let konamiSequence = [];
+const KONAMI_CODE = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+let ichthusBuffer = '';
+let activeTileIndex = -1;
+let activeBuildingIndex = -1;
+
+// ============================================================
+// INIT
+// ============================================================
+function initGame() {
+  const saved = loadGame();
+  if (saved && saved.playerName) {
+    document.getElementById('welcome-modal').classList.add('hidden');
+    updatePlayerBadge();
+    renderAll();
+    startTick();
+    if (!saved.tutorialDone) showTutorial();
+  } else {
+    document.getElementById('welcome-modal').classList.remove('hidden');
+  }
+  setupDarkMode();
+  updateBoosterShieldIndicators();
+}
+
+function startNewGame() {
+  const nameInput = document.getElementById('player-name-input');
+  const name = nameInput.value.trim();
+  if (!name) {
+    nameInput.focus();
+    nameInput.style.borderColor = 'var(--danger)';
+    const errEl = document.getElementById('name-error');
+    if (errEl) errEl.textContent = 'Voer een naam in om verder te gaan.';
+    setTimeout(() => { nameInput.style.borderColor = ''; if (errEl) errEl.textContent = ''; }, 2000);
+    return;
+  }
+  gameState.playerName = name;
+  // Free starting teacher (common rarity)
+  const commons = TEACHERS.filter(t => t.rarity === 'common');
+  const teacherPool = commons.length > 0 ? commons : TEACHERS;
+  const freeTeacher = teacherPool[Math.floor(Math.random() * teacherPool.length)];
+  gameState.staff.push(freeTeacher.id);
+  saveGame();
+  document.getElementById('welcome-modal').classList.add('hidden');
+  updatePlayerBadge();
+  renderAll();
+  startTick();
+  showNotification('Welkom ' + name + '! Je gratis docent: ' + freeTeacher.emoji + ' ' + freeTeacher.name, 'success', 'Nieuw spel gestart!');
+  setTimeout(() => showTutorial(), 800);
+}
+
+function startTick() {
+  if (tickInterval) clearInterval(tickInterval);
+  tickInterval = setInterval(gameTick, 1000);
+}
+
+// ============================================================
+// GAME TICK
+// ============================================================
+function gameTick() {
+  gameState.tickCount++;
+  gameState.totalPlayTime++;
+
+  const prod = calculateProduction();
+
+  // Add production
+  gameState.coins += prod.coins;
+  gameState.rep += prod.rep;
+  gameState.energy += prod.energy;
+  gameState.chaos += prod.chaos;
+  gameState.knowledge += prod.knowledge;
+  gameState.totalCoinsEarned += Math.max(0, prod.coins);
+
+  // Cap resources
+  gameState.energy = Math.min(200, Math.max(0, gameState.energy));
+  gameState.chaos = Math.min(gameState.specialUpgrades.includes('antichaos') ? ANTICHAOS_MAX : BASE_MAX_CHAOS, Math.max(0, gameState.chaos));
+  gameState.knowledge = Math.max(0, gameState.knowledge);
+  gameState.coins = Math.max(0, gameState.coins);
+  gameState.rep = Math.max(0, gameState.rep);
+
+  // Chaos overflow
+  if (gameState.chaos >= (gameState.specialUpgrades.includes('antichaos') ? ANTICHAOS_MAX : BASE_MAX_CHAOS)) {
+    gameState.rep = Math.max(0, gameState.rep - 200);
+    gameState.chaos = 70;
+    showNotification('Chaos overflow! -200 REP', 'error', '🔥 Chaos!');
+  }
+
+  // Natural chaos decay
+  if (gameState.chaos > 0 && prod.chaos >= 0) {
+    gameState.chaos = Math.max(0, gameState.chaos - 0.1);
+  }
+
+  // Random event 1% chance — weighted to avoid immediate repeats
+  if (Math.random() < EVENT_TRIGGER_CHANCE) {
+    // Filter out events that fired in the last 60 ticks (stored as ids)
+    const eligible = EVENTS.filter(ev => !gameState.recentEventIds.includes(ev.id));
+    const pool = eligible.length > 0 ? eligible : EVENTS;
+    const ev = pool[Math.floor(Math.random() * pool.length)];
+    // Track last 3 events to avoid repeats
+    gameState.recentEventIds.push(ev.id);
+    if (gameState.recentEventIds.length > 3) gameState.recentEventIds.shift();
+    triggerEvent(ev);
+  }
+
+  // Update quests
+  updateQuestProgress(prod);
+
+  // Check achievements
+  checkAchievements();
+
+  // Simulate leaderboard every 30 ticks
+  if (gameState.tickCount % 30 === 0) {
+    simulateLeaderboardUpdate();
+  }
+
+  // Save every 60 ticks
+  if (gameState.tickCount % 60 === 0) {
+    saveGame();
+    showNotification('Opgeslagen! 💾', 'info');
+    syncLeaderboardToFirestore();
+  }
+
+  // Update active events (remove expired)
+  updateActiveEvents();
+
+  // Reset raids daily
+  if (Date.now() - gameState.dayStart > 86400000) {
+    gameState.raidsToday = 0;
+    gameState.dayStart = Date.now();
+  }
+
+  // Clear sick teacher
+  if (gameState.sickTeacher && Date.now() > gameState.sickUntil) {
+    gameState.sickTeacher = null;
+  }
+
+  // Reset daily quests based on elapsed time since last reset
+  if (Date.now() - gameState.quests.lastReset >= QUEST_RESET_INTERVAL_MS) {
+    resetDailyQuests();
+  }
+
+  // Update nav badges
+  updateNavBadges();
+
+  // Update booster/shield
+  updateBoosterShieldIndicators();
+
+  // Update resources UI
+  renderResources(prod);
+
+  // Quote bar every 15 ticks
+  if (gameState.tickCount % 15 === 0) {
+    updateQuoteBar();
+  }
+
+  // Update active tab
+  if (currentTab === 'campus') renderCampus();
+  else if (currentTab === 'raids') renderRaids();
+  else if (currentTab === 'quests') renderQuests();
+  else if (currentTab === 'docenten') {
+    // Only refresh assignment selects, not full re-render (perf)
+    updateStaffSickStates();
+  }
+}
+
+// ============================================================
+// PRODUCTION CALCULATION
+// ============================================================
+function calculateProduction() {
+  let totCoins = 0, totRep = 0, totEnergy = 0, totChaos = 0, totKnowledge = 0;
+  const now = Date.now();
+  // Build a map of perkId -> staffId for O(1) lookup in the global perks loop
+  const perkToStaffId = new Map();
+  for (const sid of gameState.staff) {
+    const t = TEACHERS.find(x => x.id === sid);
+    if (t && t.perkId) perkToStaffId.set(t.perkId, sid);
+  }
+  const ownedPerkIds = Array.from(perkToStaffId.keys());
+  const hasRector = gameState.buildings.some(b => b.id === 'rector');
+  const boosterActive = gameState.booster > now;
+
+  for (const building of gameState.buildings) {
+    // Check disabled
+    if (gameState.disabledBuildings[building.tile] && gameState.disabledBuildings[building.tile] > now) continue;
+
+    const def = BUILDINGS.find(b => b.id === building.id);
+    if (!def || !def.production) continue;
+    const lvl = building.level || 1;
+    let c = (def.production.coins || 0) * lvl;
+    let r = (def.production.rep || 0) * lvl;
+    let e = (def.production.energy || 0) * lvl;
+    let ch = (def.production.chaos || 0) * lvl;
+    let k = (def.production.knowledge || 0) * lvl;
+
+    // Check assigned staff perk
+    if (building.assignedStaff) {
+      const teacher = TEACHERS.find(t => t.id === building.assignedStaff);
+      if (teacher && building.assignedStaff !== gameState.sickTeacher) {
+        switch(teacher.perkId) {
+          case 'gymzaal_energy_2x': if(building.id==='gymzaal') e *= 2; break;
+          case 'aula_rep_3x': if(building.id==='aula') r *= 3; break;
+          case 'aula_rep_20': if(building.id==='aula') r += 20; break;
+          case 'ictlab_50': if(building.id==='ictlab'){ c*=1.5; k*=1.5; } break;
+          case 'ictlab_25': if(building.id==='ictlab'){ c*=1.25; k*=1.25; } break;
+          case 'gymzaal_50': if(building.id==='gymzaal'){ e*=1.5; ch*=1.5; } break;
+          case 'mediatheek_knowledge_10': if(building.id==='mediatheek') k*=1.1; break;
+        }
+      }
+    }
+
+    // Apply wifi_fail active event
+    const wifiEvent = gameState.activeEvents.find(ev => ev.effect === 'wifi_fail');
+    if (wifiEvent && building.id === 'ictlab') { c *= 0.5; k *= 0.5; }
+
+    // Apply special upgrades per building
+    if (gameState.specialUpgrades.includes('wifi') && building.id === 'ictlab') { c *= 2; k *= 2; }
+    if (gameState.specialUpgrades.includes('printers') && building.id === 'mediatheek') k *= 1.5;
+
+    totCoins += c;
+    totRep += r;
+    totEnergy += e;
+    totChaos += ch;
+    totKnowledge += k;
+  }
+
+  // Global teacher perks
+  for (const perkId of ownedPerkIds) {
+    const teacherId = perkToStaffId.get(perkId);
+    if (teacherId === gameState.sickTeacher) continue;
+    switch(perkId) {
+      case 'knowledge_boost_30': totKnowledge += totKnowledge * 0.3; break;
+      case 'rep_10_tick': totRep += 10; break;
+      case 'rep_5_tick': totRep += 5; break;
+      case 'knowledge_5_tick': totKnowledge += 5; break;
+      case 'knowledge_8_tick': totKnowledge += 8; break;
+      case 'coins_20': totCoins += totCoins * 0.2; break;
+      case 'all_energy_1': totEnergy += gameState.buildings.length; break;
+      case 'chaos_minus_3': totChaos -= 3; break;
+      case 'chaos_minus_2': totChaos -= 2; break;
+      case 'energy_5_tick': totEnergy += 5; break;
+      case 'all_stats_15':
+        totCoins *= 1.15; totRep *= 1.15; totEnergy *= 1.15;
+        totKnowledge *= 1.15;
+        break;
+    }
+  }
+
+  // Rector multiplier
+  if (hasRector) totRep *= 2;
+
+  // Special upgrades (global)
+  if (gameState.specialUpgrades.includes('biokantine')) totChaos -= 10;
+  if (gameState.specialUpgrades.includes('solar')) totEnergy += 5;
+
+  // Booster
+  if (boosterActive) {
+    totCoins *= 2; totRep *= 2; totEnergy = Math.max(totEnergy, totEnergy * 2);
+    totKnowledge *= 2;
+  }
+
+  // Prestige bonus
+  if (gameState.prestige > 0) {
+    const mult = 1 + gameState.prestige * 0.1;
+    totCoins *= mult; totRep *= mult; totKnowledge *= mult;
+  }
+
+  return {
+    coins: Math.round(totCoins * 100) / 100,
+    rep: Math.round(totRep * 100) / 100,
+    energy: Math.round(totEnergy * 100) / 100,
+    chaos: Math.round(totChaos * 100) / 100,
+    knowledge: Math.round(totKnowledge * 100) / 100,
+  };
+}
+
+// ============================================================
+// BUILDINGS
+// ============================================================
+function buildBuilding(buildingId, tileIndex) {
+  const def = BUILDINGS.find(b => b.id === buildingId);
+  if (!def) return;
+  if (gameState.coins < def.cost) {
+    showNotification('Niet genoeg coins! Je hebt ' + Math.floor(gameState.coins) + ' maar hebt ' + def.cost + ' nodig.', 'error', 'Te weinig coins');
+    return;
+  }
+  // Check maxCount
+  const existing = gameState.buildings.filter(b => b.id === buildingId).length;
+  if (existing >= def.maxCount) {
+    showNotification('Je kunt maximaal ' + def.maxCount + ' ' + def.name + '(s) hebben!', 'warning');
+    return;
+  }
+  // Check tile is empty
+  if (gameState.buildings.some(b => b.tile === tileIndex)) {
+    showNotification('Dit vakje is al bezet!', 'warning');
+    return;
+  }
+  gameState.coins -= def.cost;
+  gameState.buildings.push({ id:buildingId, level:1, tile:tileIndex, assignedStaff:null });
+  // Quest progress
+  gameState.quests.daily.build3.progress = Math.min(3, gameState.quests.daily.build3.progress + 1);
+  if (gameState.quests.daily.build3.progress >= 3 && !gameState.quests.daily.build3.completed) {
+    completeQuest('build3');
+  }
+  checkAchievements();
+  showNotification(def.emoji + ' ' + def.name + ' gebouwd!', 'success', 'Gebouw geplaatst');
+  closeModal('building-modal');
+  renderCampus();
+}
+
+function upgradeBuilding(buildingIndex) {
+  const building = gameState.buildings[buildingIndex];
+  if (!building) return;
+  const def = BUILDINGS.find(b => b.id === building.id);
+  if (!def) return;
+  if (building.level >= 5) {
+    showNotification('Dit gebouw is al op maximaal level!', 'warning'); return;
+  }
+  const upgCost = def.upgradeCost[building.level - 1];
+  if (gameState.coins < upgCost) {
+    showNotification('Niet genoeg coins! Nodig: ' + upgCost, 'error'); return;
+  }
+  gameState.coins -= upgCost;
+  building.level++;
+  checkAchievements();
+  showNotification(def.emoji + ' ' + def.name + ' is nu level ' + building.level + '!', 'success', 'Upgrade!');
+  closeModal('building-info-modal');
+  renderCampus();
+  if (currentTab === 'upgrades') renderUpgrades();
+}
+
+function removeBuilding(buildingIndex) {
+  const building = gameState.buildings[buildingIndex];
+  if (!building) return;
+  const def = BUILDINGS.find(b => b.id === building.id);
+  gameState.buildings.splice(buildingIndex, 1);
+  closeModal('building-info-modal');
+  showNotification((def ? def.emoji + ' ' + def.name : 'Gebouw') + ' verwijderd.', 'info');
+  renderCampus();
+}
+
+// ============================================================
+// TEACHERS / SHOP
+// ============================================================
+function openTeacherPack(packType) {
+  const costs = { common:200, deluxe:500, legendary:1500 };
+  const cost = costs[packType];
+  if (gameState.coins < cost) {
+    showNotification('Niet genoeg coins! Nodig: ' + cost, 'error', 'Te weinig coins'); return;
+  }
+  // Roll rarity
+  let rarity;
+  const roll = Math.random() * 100;
+  if (packType === 'common') {
+    rarity = roll < 70 ? 'common' : roll < 95 ? 'rare' : 'epic';
+  } else if (packType === 'deluxe') {
+    rarity = roll < 40 ? 'common' : roll < 80 ? 'rare' : roll < 98 ? 'epic' : 'legendary';
+  } else {
+    rarity = roll < 10 ? 'common' : roll < 40 ? 'rare' : roll < 80 ? 'epic' : 'legendary';
+  }
+  // Find teacher of that rarity not owned
+  let available = TEACHERS.filter(t => t.rarity === rarity && !gameState.staff.includes(t.id));
+  if (available.length === 0) {
+    // Try any not owned
+    available = TEACHERS.filter(t => !gameState.staff.includes(t.id));
+  }
+  if (available.length === 0) {
+    gameState.coins -= cost;
+    showNotification('Je hebt al alle docenten! Je krijgt 50 coins terug.', 'warning');
+    gameState.coins += 50;
+    return;
+  }
+  gameState.coins -= cost;
+  const teacher = available[Math.floor(Math.random() * available.length)];
+  gameState.staff.push(teacher.id);
+  // Quest
+  gameState.quests.daily.buyPack.progress = Math.min(1, gameState.quests.daily.buyPack.progress + 1);
+  if (gameState.quests.daily.buyPack.progress >= 1 && !gameState.quests.daily.buyPack.completed) {
+    completeQuest('buyPack');
+  }
+  checkAchievements();
+  showTeacherReveal(teacher);
+  updateNavBadges();
+  if (currentTab === 'docenten') renderStaff();
+}
+
+function assignTeacher(teacherId, buildingIndex) {
+  // Empty string or null means unassign
+  if (!teacherId) {
+    if (buildingIndex >= 0 && gameState.buildings[buildingIndex]) {
+      gameState.buildings[buildingIndex].assignedStaff = null;
+    }
+    if (currentTab === 'docenten') renderStaff();
+    if (currentTab === 'campus') renderCampus();
+    return;
+  }
+  // Remove from any previous building
+  for (const b of gameState.buildings) {
+    if (b.assignedStaff === teacherId) b.assignedStaff = null;
+  }
+  if (buildingIndex >= 0 && gameState.buildings[buildingIndex]) {
+    gameState.buildings[buildingIndex].assignedStaff = teacherId;
+  }
+  if (currentTab === 'docenten') renderStaff();
+  if (currentTab === 'campus') renderCampus();
+}
+
+function updateStaffSickStates() {
+  const cards = document.querySelectorAll('.teacher-card');
+  cards.forEach(card => {
+    const tid = card.dataset.tid;
+    if (tid === gameState.sickTeacher) card.classList.add('sick');
+    else card.classList.remove('sick');
+  });
+}
+
+// ============================================================
+// RAIDS
+// ============================================================
+function performRaid(targetId) {
+  if (gameState.energy < 50) {
+    showNotification('Niet genoeg energie! Je hebt minimaal 50 energie nodig.', 'error', 'Onvoldoende energie'); return;
+  }
+  if (gameState.raidsToday >= 3) {
+    showNotification('Je hebt vandaag al 3 raids uitgevoerd. Kom morgen terug!', 'warning'); return;
+  }
+  const cooldownEnd = gameState.raidCooldowns[targetId];
+  if (cooldownEnd && Date.now() < cooldownEnd) {
+    const remaining = Math.ceil((cooldownEnd - Date.now()) / 1000);
+    showNotification('Deze speler heeft nog ' + remaining + 's cooldown.', 'warning'); return;
+  }
+  // Shield check
+  if (gameState.shield > Date.now()) {
+    showNotification('Jij hebt een schild! Raid je eigen school? 🤔', 'warning'); return;
+  }
+  const target = gameState.leaderboard.find(p => p.id === targetId);
+  if (!target) return;
+
+  gameState.energy -= 50;
+  // Success calculation
+  let successChance = 50 + gameState.buildings.length * 2;
+  const hasJan = gameState.staff.includes('jan');
+  if (hasJan) successChance += 20; // Jan helps your raid too
+  // Target defense
+  const targetDefense = (target.buildings || 0) * 10;
+  successChance -= targetDefense * 0.5;
+  successChance = Math.max(10, Math.min(85, successChance));
+
+  const success = Math.random() * 100 < successChance;
+  const coinProtection = gameState.buildings.filter(b => b.id === 'kluisjes').length * 0.3;
+
+  if (success) {
+    let stolen = Math.floor(target.rep * 0.05 + Math.random() * 50 + 20);
+    // Adjust for protection
+    stolen = Math.floor(stolen * (1 - Math.min(0.9, coinProtection)));
+    gameState.coins += stolen;
+    gameState.totalCoinsEarned += stolen;
+    gameState.successfulRaids++;
+    target.rep = Math.max(0, target.rep - Math.floor(stolen * 0.5));
+    const entry = {
+      time: Date.now(),
+      target: target.name,
+      result: 'success',
+      coins: stolen,
+      msg: Math.random() > 0.5 ? 'Jan was er niet...' : 'Perfect uitgevoerd!'
+    };
+    gameState.raidLog.unshift(entry);
+    if (gameState.raidLog.length > 20) gameState.raidLog.pop();
+    showNotification('+' + stolen + ' coins gestolen van ' + target.name + '!', 'success', '⚔️ Raid succesvol!');
+    spawnCoinFloat(stolen);
+  } else {
+    // Defender bonus
+    const entry = {
+      time: Date.now(),
+      target: target.name,
+      result: 'fail',
+      coins: 0,
+      msg: Math.random() > 0.5 ? 'Jan heeft je betrapt!' : 'Beveiliging te sterk!'
+    };
+    gameState.raidLog.unshift(entry);
+    if (gameState.raidLog.length > 20) gameState.raidLog.pop();
+    showNotification('Raid op ' + target.name + ' mislukt!', 'error', '⚔️ Raid mislukt');
+  }
+
+  gameState.raidCooldowns[targetId] = Date.now() + 120000;
+  gameState.raidsToday++;
+  checkAchievements();
+  if (currentTab === 'raids') renderRaids();
+}
+
+function getRaidDefenseCount() {
+  // Count how many times player was "defended" (simulated)
+  return gameState.raidDefenseCount;
+}
+
+// ============================================================
+// EVENTS
+// ============================================================
+function triggerEvent(event) {
+  const hasCindy = gameState.staff.includes('cindy');
+  let msg = '';
+  switch(event.effect) {
+    case 'toetsweek':
+      gameState.chaos = Math.min(100, gameState.chaos + 20);
+      if (gameState.buildings.some(b => b.id === 'mediatheek')) {
+        gameState.knowledge += 50;
+        msg = 'Toetsweek! Chaos +20, maar Mediatheek levert +50 Kennis!';
+      } else {
+        msg = 'Toetsweek! Chaos +20!';
+      }
+      break;
+    case 'opendag':
+      if (gameState.buildings.some(b => b.id === 'aula')) {
+        const bonus = Math.floor(100 * (hasCindy ? 1.15 : 1));
+        gameState.rep += bonus;
+        msg = 'Open Dag! +' + bonus + ' REP (Aula bonus)!';
+      } else {
+        msg = 'Open Dag! Geen Aula — gemiste kans.';
+      }
+      break;
+    case 'sportdag':
+      if (gameState.buildings.some(b => b.id === 'gymzaal')) {
+        gameState.energy = Math.min(200, gameState.energy + 50);
+        msg = 'Sportdag! +50 Energie!';
+      } else {
+        msg = 'Sportdag! Geen Gymzaal — vermoeid...';
+      }
+      break;
+    case 'wifi_fail': {
+      const expiry = Date.now() + 30000;
+      gameState.activeEvents.push({ effect:'wifi_fail', name:'WiFi Storing 🔥', expiresAt:expiry });
+      msg = 'WiFi storing! ICT-Lab productie gehalveerd voor 30s!';
+      break;
+    }
+    case 'teacher_sick':
+      if (gameState.staff.length > 0) {
+        gameState.sickTeacher = gameState.staff[Math.floor(Math.random() * gameState.staff.length)];
+        gameState.sickUntil = Date.now() + 30000;
+        const t = TEACHERS.find(x => x.id === gameState.sickTeacher);
+        msg = (t ? t.name : 'Docent') + ' is ziek! 30 seconden inactief.';
+      } else {
+        return;
+      }
+      break;
+    case 'schoolfeest':
+      gameState.rep += 200;
+      msg = 'Schoolfeest! +200 REP!';
+      spawnConfetti();
+      break;
+    case 'schoolkrant':
+      gameState.rep += 50;
+      msg = 'Schoolkrant schrijft positief! +50 REP';
+      break;
+    case 'inspectie':
+      if (gameState.chaos >= 30) {
+        gameState.rep = Math.max(0, gameState.rep - 500);
+        msg = 'Inspectie gefaald! Te veel chaos! -500 REP!';
+        showNotification(msg, 'error', '🏆 Inspectie');
+      } else {
+        gameState.rep += 100;
+        msg = 'Inspectie geslaagd! +100 REP! 🎉';
+        showNotification(msg, 'success', '🏆 Inspectie');
+      }
+      return;
+    case 'regen': {
+      const now = Date.now();
+      for (const b of gameState.buildings) {
+        if (b.id === 'sportveld') gameState.disabledBuildings[b.tile] = now + 60000;
+      }
+      msg = 'Regen! Sportveld(en) inactief voor 60 seconden. ☔';
+      break;
+    }
+    case 'afstuderen': {
+      const bonus = Math.floor(200 + gameState.knowledge * 0.5);
+      gameState.rep += bonus;
+      msg = 'Afstudering! +' + bonus + ' REP!';
+      spawnConfetti();
+      break;
+    }
+    default: msg = event.name + ' heeft plaatsgevonden!';
+  }
+  if (msg) showNotification(msg, 'warning', event.name);
+  if (currentTab === 'campus') renderCampus();
+}
+
+function updateActiveEvents() {
+  const now = Date.now();
+  gameState.activeEvents = gameState.activeEvents.filter(ev => ev.expiresAt > now);
+  // Update disabled buildings
+  for (const key of Object.keys(gameState.disabledBuildings)) {
+    if (gameState.disabledBuildings[key] <= now) delete gameState.disabledBuildings[key];
+  }
+}
+
+// ============================================================
+// QUESTS & ACHIEVEMENTS
+// ============================================================
+function updateQuestProgress(prod) {
+  // earn500rep: track total rep
+  if (!gameState.quests.daily.earn500rep.completed) {
+    gameState.quests.daily.earn500rep.progress = Math.min(500, gameState.rep);
+    if (gameState.rep >= 500) completeQuest('earn500rep');
+  }
+  // chaosLow: increment if chaos < 20
+  if (!gameState.quests.daily.chaosLow.completed) {
+    if (gameState.chaos < 20) {
+      gameState.quests.daily.chaosLow.progress = Math.min(60, gameState.quests.daily.chaosLow.progress + 1);
+      if (gameState.quests.daily.chaosLow.progress >= 60) completeQuest('chaosLow');
+    }
+  }
+}
+
+function completeQuest(questId) {
+  const q = gameState.quests.daily[questId];
+  if (!q || q.completed) return;
+  q.completed = true;
+  q.progress = q.goal;
+  gameState.coins += q.reward;
+  gameState.totalCoinsEarned += q.reward;
+  showNotification('Quest voltooid: ' + q.name + '! +' + q.reward + ' coins 🎉', 'success', '📋 Quest Klaar!');
+  spawnConfetti();
+  updateNavBadges();
+}
+
+function resetDailyQuests() {
+  const daily = gameState.quests.daily;
+  for (const key of Object.keys(daily)) {
+    daily[key].completed = false;
+    daily[key].progress = 0;
+  }
+  gameState.quests.lastReset = Date.now();
+  showNotification('Dagelijkse quests gereset! Nieuwe uitdagingen wachten!', 'info', '📋 Quests Reset');
+  updateNavBadges();
+}
+
+function checkAchievements() {
+  let newUnlock = false;
+  for (const ach of ACHIEVEMENTS) {
+    if (!gameState.achievements.includes(ach.id)) {
+      try {
+        if (ach.check(gameState)) {
+          gameState.achievements.push(ach.id);
+          gameState.achievementDates[ach.id] = Date.now();
+          showNotification(ach.emoji + ' ' + ach.name + ' ontgrendeld!', 'success', '🏅 Prestatie!');
+          spawnConfetti();
+          newUnlock = true;
+        }
+      } catch(e) { console.warn('Achievement check error:', ach.id, e); }
+    }
+  }
+  if (newUnlock) updateNavBadges();
+}
+
+// ============================================================
+// PRESTIGE
+// ============================================================
+function showPrestigeConfirm() {
+  if (gameState.rep < PRESTIGE_REP_REQUIREMENT) {
+    showNotification('Je hebt 10.000 REP nodig voor prestige! (Jij hebt: ' + Math.floor(gameState.rep) + ')', 'warning'); return;
+  }
+  showConfirmModal(
+    'Prestige bevestigen',
+    'Weet je zeker dat je wil prestigieuzen? Je verliest al je gebouwen maar houdt je docenten en krijgt een permanente +10% bonus per prestige niveau.',
+    () => performPrestige()
+  );
+}
+
+function performPrestige() {
+  gameState.prestige++;
+  // Keep staff, achievements, specialUpgrades, prestige, leaderboard
+  const keep = {
+    playerName: gameState.playerName,
+    staff: gameState.staff,
+    achievements: gameState.achievements,
+    achievementDates: gameState.achievementDates,
+    specialUpgrades: gameState.specialUpgrades,
+    prestige: gameState.prestige,
+    totalPlayTime: gameState.totalPlayTime,
+    totalCoinsEarned: gameState.totalCoinsEarned,
+    successfulRaids: gameState.successfulRaids,
+    raidDefenseCount: gameState.raidDefenseCount,
+    leaderboard: gameState.leaderboard,
+    tutorialDone: true,
+    raidLog: gameState.raidLog,
+    quests: gameState.quests,
+    dayStart: gameState.dayStart,
+  };
+  // Reset
+  gameState.coins = 500;
+  gameState.rep = 0;
+  gameState.energy = 100;
+  gameState.chaos = 0;
+  gameState.knowledge = 0;
+  gameState.canteenSupply = 100;
+  gameState.buildings = [];
+  gameState.shield = 0;
+  gameState.raidCooldowns = {};
+  gameState.raidsToday = 0;
+  gameState.activeEvents = [];
+  gameState.disabledBuildings = {};
+  gameState.booster = 0;
+  gameState.tickCount = 0;
+  gameState.sickTeacher = null;
+  gameState.sickUntil = 0;
+  gameState.logoClickCount = 0;
+  // Restore kept values
+  Object.assign(gameState, keep);
+  checkAchievements();
+  saveGame();
+  spawnConfetti();
+  showNotification('Prestige ' + gameState.prestige + ' bereikt! +' + (gameState.prestige*10) + '% permanente bonus! ✨', 'success', '🌟 Prestige!');
+  updatePlayerBadge();
+  renderAll();
+}
+
+// ============================================================
+// SAVE / LOAD
+// ============================================================
+function saveGame() {
+  try {
+    gameState.lastSave = Date.now();
+    localStorage.setItem('ichthus_tycoon_save', JSON.stringify(gameState));
+  } catch(e) { console.warn('Save failed:', e); showNotification('Opslaan mislukt! Verwijder oude browserdata of schakel cookies in voor deze site.', 'error', 'Opslaan Mislukt'); }
+}
+
+function loadGame() {
+  try {
+    const raw = localStorage.getItem('ichthus_tycoon_save');
+    if (!raw) return null;
+    const saved = JSON.parse(raw);
+    // Merge with defaults for missing top-level fields
+    const defaults = {
+      leaderboard: JSON.parse(JSON.stringify(FAKE_PLAYERS)),
+      achievementDates: {},
+      disabledBuildings: {},
+      raidCooldowns: {},
+      activeEvents: [],
+      specialUpgrades: [],
+      raidsToday: 0,
+      dayStart: Date.now(),
+      sickTeacher: null,
+      sickUntil: 0,
+      logoClickCount: 0,
+      recentEventIds: [],
+    };
+    for (const k of Object.keys(defaults)) {
+      if (saved[k] === undefined) saved[k] = defaults[k];
+    }
+    // Deep-merge quests: ensure all daily quest keys exist in loaded data
+    if (!saved.quests || typeof saved.quests !== 'object') {
+      saved.quests = gameState.quests;
+    } else {
+      if (!saved.quests.daily || typeof saved.quests.daily !== 'object') {
+        saved.quests.daily = gameState.quests.daily;
+      } else {
+        for (const [key, val] of Object.entries(gameState.quests.daily)) {
+          if (!saved.quests.daily[key] || typeof saved.quests.daily[key] !== 'object') {
+            saved.quests.daily[key] = val;
+          }
+        }
+      }
+      if (saved.quests.lastReset === undefined) saved.quests.lastReset = Date.now();
+    }
+    Object.assign(gameState, saved);
+    return saved;
+  } catch(e) { console.warn('Load failed:', e); showNotification('Opgeslagen spel kon niet worden geladen. Nieuw spel gestart!', 'warning', 'Laden Mislukt'); return null; }
+}
+
+function resetGame() {
+  showConfirmModal(
+    'Spel Resetten',
+    'Weet je zeker dat je alles wil resetten? Al je voortgang gaat verloren!',
+    () => {
+      localStorage.removeItem('ichthus_tycoon_save');
+      location.reload();
+    }
+  );
+}
+
+// ============================================================
+// LEADERBOARD SIMULATION
+// ============================================================
+function simulateLeaderboardUpdate() {
+  const count = Math.floor(Math.random() * 3) + 2;
+  for (let i = 0; i < count; i++) {
+    const idx = Math.floor(Math.random() * gameState.leaderboard.length);
+    const delta = Math.floor(Math.random() * 250) - 50;
+    gameState.leaderboard[idx].rep = Math.max(0, gameState.leaderboard[idx].rep + delta);
+  }
+  if (currentTab === 'leaderboard') renderLeaderboard();
+}
+
+// ============================================================
+// BOOSTERS & SHIELD
+// ============================================================
+function buyBooster() {
+  if (gameState.coins < 300) { showNotification('Niet genoeg coins! Nodig: 300', 'error'); return; }
+  gameState.coins -= 300;
+  gameState.booster = Date.now() + 60000;
+  updateBoosterShieldIndicators();
+  showNotification('2x Productie Boost actief voor 60 seconden! ⚡', 'success', 'Boost actief!');
+}
+
+function buyShield() {
+  if (gameState.coins < 200) { showNotification('Niet genoeg coins! Nodig: 200', 'error'); return; }
+  gameState.coins -= 200;
+  gameState.shield = Date.now() + 300000;
+  updateBoosterShieldIndicators();
+  showNotification('Raid Schild actief voor 5 minuten! 🛡️', 'success', 'Schild actief!');
+}
+
+function buySpecialUpgrade(upgradeId) {
+  const upg = SPECIAL_UPGRADES.find(u => u.id === upgradeId);
+  if (!upg) return;
+  if (gameState.specialUpgrades.includes(upgradeId)) {
+    showNotification('Je hebt deze upgrade al!', 'warning'); return;
+  }
+  if (gameState.knowledge < upg.knowledgeReq) {
+    showNotification('Niet genoeg Kennis! Nodig: ' + upg.knowledgeReq, 'warning'); return;
+  }
+  if (gameState.coins < upg.cost) {
+    showNotification('Niet genoeg coins! Nodig: ' + upg.cost, 'error'); return;
+  }
+  gameState.coins -= upg.cost;
+  gameState.specialUpgrades.push(upgradeId);
+  showNotification(upg.emoji + ' ' + upg.name + ' gekocht!', 'success', 'Upgrade!');
+  if (currentTab === 'upgrades') renderUpgrades();
+}
+
+function updateBoosterShieldIndicators() {
+  const now = Date.now();
+  const boosterEl = document.getElementById('booster-indicator');
+  const shieldEl = document.getElementById('shield-indicator');
+  if (boosterEl) {
+    if (gameState.booster > now) {
+      boosterEl.style.display = 'inline-block';
+      const secs = Math.ceil((gameState.booster - now) / 1000);
+      boosterEl.textContent = '⚡ 2x BOOST ' + secs + 's';
+    } else {
+      boosterEl.style.display = 'none';
+    }
+  }
+  if (shieldEl) {
+    if (gameState.shield > now) {
+      shieldEl.style.display = 'inline-block';
+      const secs = Math.ceil((gameState.shield - now) / 1000);
+      shieldEl.textContent = '🛡️ SHIELD ' + secs + 's';
+    } else {
+      shieldEl.style.display = 'none';
+    }
+  }
+}
+// ============================================================
+// RENDER FUNCTIONS
+// ============================================================
+function renderAll() {
+  renderResources();
+  renderCampus();
+  renderStaff();
+  renderLeaderboard();
+  renderRaids();
+  renderQuests();
+  renderAchievements();
+  renderUpgrades();
+  renderShop();
+  renderSettings();
+  updatePlayerBadge();
+  updateNavBadges();
+}
+
+function renderResources(prod) {
+  if (!prod) prod = calculateProduction();
+  document.getElementById('res-coins').textContent = Math.floor(gameState.coins).toLocaleString('nl-NL');
+  document.getElementById('res-rep').textContent = Math.floor(gameState.rep).toLocaleString('nl-NL');
+  document.getElementById('res-energy').textContent = Math.floor(gameState.energy);
+  document.getElementById('res-chaos').textContent = Math.floor(gameState.chaos);
+  document.getElementById('res-knowledge').textContent = Math.floor(gameState.knowledge);
+  const rateEl = document.getElementById('res-coins-rate');
+  if (rateEl) rateEl.textContent = '(' + (prod.coins >= 0 ? '+' : '') + prod.coins.toFixed(1) + '/s)';
+  const repRateEl = document.getElementById('res-rep-rate');
+  if (repRateEl) repRateEl.textContent = '(' + (prod.rep >= 0 ? '+' : '') + prod.rep.toFixed(1) + '/s)';
+  const knRateEl = document.getElementById('res-knowledge-rate');
+  if (knRateEl) knRateEl.textContent = '(' + (prod.knowledge >= 0 ? '+' : '') + prod.knowledge.toFixed(1) + '/s)';
+}
+
+function updatePlayerBadge() {
+  const badge = document.getElementById('player-badge');
+  const presEl = document.getElementById('prestige-display');
+  if (badge) {
+    const nameSpan = badge.querySelector('span:first-child');
+    if (nameSpan) nameSpan.textContent = gameState.playerName || 'Speler';
+  }
+  if (presEl) {
+    presEl.textContent = gameState.prestige > 0 ? '✨'.repeat(Math.min(gameState.prestige, 5)) : '';
+  }
+}
+
+function updateNavBadges() {
+  // Quests: count completed
+  const completedQuests = Object.values(gameState.quests.daily).filter(q => q.completed).length;
+  const qBadge = document.getElementById('nav-badge-quests');
+  if (qBadge) {
+    const totalQ = Object.keys(gameState.quests.daily).length;
+    if (completedQuests > 0 && completedQuests < totalQ) {
+      qBadge.style.display = 'inline-block';
+      qBadge.textContent = completedQuests + '/' + totalQ;
+    } else if (completedQuests === totalQ) {
+      qBadge.style.display = 'inline-block';
+      qBadge.textContent = '✓';
+    } else {
+      qBadge.style.display = 'none';
+    }
+  }
+  // Achievements
+  const aBadge = document.getElementById('nav-badge-achievements');
+  if (aBadge) {
+    const unlocked = gameState.achievements.length;
+    if (unlocked > 0) {
+      aBadge.style.display = 'inline-block';
+      aBadge.textContent = unlocked + '/' + ACHIEVEMENTS.length;
+    } else {
+      aBadge.style.display = 'none';
+    }
+  }
+  // Docenten
+  const dBadge = document.getElementById('nav-badge-docenten');
+  if (dBadge) {
+    if (gameState.staff.length > 0) {
+      dBadge.style.display = 'inline-block';
+      dBadge.textContent = gameState.staff.length;
+    } else {
+      dBadge.style.display = 'none';
+    }
+  }
+  // Raids
+  const rBadge = document.getElementById('nav-badge-raids');
+  if (rBadge) {
+    const remaining = 3 - gameState.raidsToday;
+    if (remaining > 0) {
+      rBadge.style.display = 'inline-block';
+      rBadge.textContent = remaining;
+    } else {
+      rBadge.style.display = 'none';
+    }
+  }
+}
+
+function renderCampus() {
+  const grid = document.getElementById('campus-grid');
+  if (!grid) return;
+  const TOTAL_TILES = 36;
+  let html = '';
+  for (let i = 0; i < TOTAL_TILES; i++) {
+    const buildingIdx = gameState.buildings.findIndex(b => b.tile === i);
+    const building = buildingIdx >= 0 ? gameState.buildings[buildingIdx] : null;
+    if (building) {
+      const def = BUILDINGS.find(b => b.id === building.id);
+      const lvl = building.level || 1;
+      const assignedTeacher = building.assignedStaff ? TEACHERS.find(t => t.id === building.assignedStaff) : null;
+      const isDisabled = gameState.disabledBuildings[i] && gameState.disabledBuildings[i] > Date.now();
+      const isLegendary = assignedTeacher && assignedTeacher.rarity === 'legendary';
+      let classes = 'campus-tile occupied';
+      if (isLegendary) classes += ' legendary-glow';
+      if (isDisabled) classes += ' disabled';
+      const stars = '★'.repeat(lvl) + '☆'.repeat(5 - lvl);
+      html += '<div class="' + classes + '" onclick="openBuildingInfoModal(' + buildingIdx + ')" title="' + (def ? def.name : '') + ' (Level ' + lvl + ')">';
+      html += '<div class="tile-emoji"' + (isDisabled ? ' style="filter:grayscale(1)"' : '') + '>' + (def ? def.emoji : '❓') + '</div>';
+      html += '<div class="tile-name">' + (def ? def.name : '') + '</div>';
+      html += '<div class="tile-level">Lv' + lvl + '</div>';
+      if (assignedTeacher) {
+        html += '<div class="tile-staff" title="' + assignedTeacher.name + '">' + assignedTeacher.emoji + '</div>';
+      }
+      html += '</div>';
+    } else {
+      html += '<div class="campus-tile" onclick="openBuildingModal(' + i + ')" title="Leeg vakje - klik om te bouwen">';
+      html += '<div class="tile-plus">+</div>';
+      html += '</div>';
+    }
+  }
+  grid.innerHTML = html;
+  // Building count
+  const countEl = document.getElementById('building-count');
+  if (countEl) countEl.textContent = gameState.buildings.length + ' / ' + TOTAL_TILES;
+  // Active events bar
+  renderActiveEventsBar();
+  // Production summary
+  renderProductionSummary();
+}
+
+function renderActiveEventsBar() {
+  const bar = document.getElementById('active-events-bar');
+  if (!bar) return;
+  const now = Date.now();
+  let pills = '';
+  for (const ev of gameState.activeEvents) {
+    if (ev.expiresAt > now) {
+      const secs = Math.ceil((ev.expiresAt - now) / 1000);
+      const isDanger = ev.effect === 'wifi_fail';
+      pills += '<span class="event-pill' + (isDanger ? ' danger' : '') + '">' + ev.name + ' (' + secs + 's)</span>';
+    }
+  }
+  if (gameState.sickTeacher) {
+    const t = TEACHERS.find(x => x.id === gameState.sickTeacher);
+    const secs = Math.ceil(Math.max(0, gameState.sickUntil - now) / 1000);
+    pills += '<span class="event-pill danger">🤧 ' + (t ? t.name : 'Docent') + ' ziek (' + secs + 's)</span>';
+  }
+  bar.innerHTML = pills;
+}
+
+function renderProductionSummary() {
+  const el = document.getElementById('production-details');
+  if (!el) return;
+  const prod = calculateProduction();
+  const fmt = (v) => {
+    if (v === 0) return '<span style="color:var(--text-secondary)">0</span>';
+    const sign = v > 0 ? '+' : '';
+    const color = v > 0 ? 'var(--success)' : 'var(--danger)';
+    return '<span style="color:' + color + ';font-weight:700">' + sign + v.toFixed(2) + '</span>';
+  };
+  el.innerHTML = '<div class="prod-grid">' +
+    '<div class="prod-item"><span class="prod-icon">💰</span><div><div class="prod-label">Coins</div><div class="prod-val">' + fmt(prod.coins) + '/s</div></div></div>' +
+    '<div class="prod-item"><span class="prod-icon">⭐</span><div><div class="prod-label">REP</div><div class="prod-val">' + fmt(prod.rep) + '/s</div></div></div>' +
+    '<div class="prod-item"><span class="prod-icon">⚡</span><div><div class="prod-label">Energie</div><div class="prod-val">' + fmt(prod.energy) + '/s</div></div></div>' +
+    '<div class="prod-item"><span class="prod-icon">🔥</span><div><div class="prod-label">Chaos</div><div class="prod-val">' + fmt(prod.chaos) + '/s</div></div></div>' +
+    '<div class="prod-item"><span class="prod-icon">📚</span><div><div class="prod-label">Kennis</div><div class="prod-val">' + fmt(prod.knowledge) + '/s</div></div></div>' +
+  '</div>';
+}
+
+function renderStaff() {
+  const grid = document.getElementById('staff-grid');
+  const noMsg = document.getElementById('no-staff-msg');
+  const countText = document.getElementById('staff-count-text');
+  if (!grid) return;
+  if (gameState.staff.length === 0) {
+    grid.innerHTML = '';
+    if (noMsg) noMsg.classList.remove('hidden');
+    if (countText) countText.textContent = 'Je hebt nog geen docenten';
+    return;
+  }
+  if (noMsg) noMsg.classList.add('hidden');
+  if (countText) countText.textContent = gameState.staff.length + ' docent(en) in dienst';
+  const now = Date.now();
+  let html = '';
+  for (const tid of gameState.staff) {
+    const t = TEACHERS.find(x => x.id === tid);
+    if (!t) continue;
+    const isSick = t.id === gameState.sickTeacher && now < gameState.sickUntil;
+    const assignedToBuilding = gameState.buildings.findIndex(b => b.assignedStaff === t.id);
+    const rarityColor = { common:'#9e9e9e', rare:'#2196F3', epic:'#9C27B0', legendary:'#FFD700' };
+    html += '<div class="teacher-card rarity-' + t.rarity + (isSick ? ' sick' : '') + '" data-tid="' + t.id + '">';
+    html += '<div class="teacher-header">';
+    html += '<div class="teacher-emoji">' + t.emoji + '</div>';
+    html += '<div><div class="teacher-name">' + t.name + (isSick ? ' 🤧' : '') + '</div>';
+    html += '<div class="teacher-subject">' + t.subject + '</div>';
+    html += '<div class="mt-4"><span class="rarity-badge ' + t.rarity + '">' + rarityLabel(t.rarity) + '</span></div></div>';
+    html += '</div>';
+    html += '<div class="teacher-stats">';
+    for (const [stat, val] of Object.entries(t.stats)) {
+      html += '<div class="stat-row"><span class="stat-label">' + capFirst(stat) + '</span>';
+      html += '<div class="stat-bar"><div class="stat-fill" style="width:' + (val*10) + '%"></div></div>';
+      html += '<span class="stat-val">' + val + '</span></div>';
+    }
+    html += '</div>';
+    html += '<div class="teacher-perk"><strong>⚡ Perk</strong>' + t.perk + '</div>';
+    html += '<div class="teacher-quote">"' + t.quote + '"</div>';
+    html += '<div class="teacher-assign">';
+    html += '<label>Toewijzen aan gebouw:</label>';
+    html += '<select class="assign-select" onchange="assignTeacher(\'' + t.id + '\', parseInt(this.value))">';
+    html += '<option value="-1"' + (assignedToBuilding < 0 ? ' selected' : '') + '>— Niet toegewezen —</option>';
+    for (let bi = 0; bi < gameState.buildings.length; bi++) {
+      const b = gameState.buildings[bi];
+      const bd = BUILDINGS.find(x => x.id === b.id);
+      const label = (bd ? bd.emoji + ' ' + bd.name : b.id) + ' (Lv' + b.level + ')';
+      const isCurrent = assignedToBuilding === bi;
+      const isOccupied = b.assignedStaff && b.assignedStaff !== t.id;
+      html += '<option value="' + bi + '"' + (isCurrent ? ' selected' : '') + (isOccupied ? ' disabled' : '') + '>' + label + (isOccupied ? ' (bezet)' : '') + '</option>';
+    }
+    html += '</select></div>';
+    html += '</div>';
+  }
+  grid.innerHTML = html;
+}
+
+function renderLeaderboard() {
+  const container = document.getElementById('leaderboard-container');
+  if (!container) return;
+
+  if (fbAuth.currentUser) {
+    // Firestore real-time leaderboard (subscription set up in navigateTo)
+    // This function just renders whatever is already in the container via the snapshot listener
+    return;
+  }
+
+  // Not logged in: show fake leaderboard with login banner
+  container.innerHTML = '<div style="background:var(--accent);color:#fff;border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:16px;font-size:14px;font-weight:600;text-align:center">🔑 Log in om het echte leaderboard te zien!</div>' + buildFakeLeaderboardHTML();
+}
+
+function buildFakeLeaderboardHTML() {
+  const playerEntry = {
+    id:'__player__',
+    name: gameState.playerName || 'Jij',
+    rep: Math.floor(gameState.rep),
+    buildings: gameState.buildings.length,
+    staff: gameState.staff.length,
+    prestige: gameState.prestige,
+    isPlayer: true,
+  };
+  const allPlayers = [...gameState.leaderboard, playerEntry];
+  allPlayers.sort((a,b) => b.rep - a.rep);
+  const playerRank = allPlayers.findIndex(p => p.isPlayer) + 1;
+  let html = '<div style="margin-bottom:12px;font-size:14px;color:var(--text-secondary)">Jouw rang: <strong style="color:var(--accent)">#' + playerRank + '</strong> van ' + allPlayers.length + '</div>';
+  html += '<div style="overflow-x:auto"><table class="lb-table"><thead><tr>';
+  html += '<th>#</th><th>Naam</th><th>REP</th><th>Gebouwen</th><th>Docenten</th><th>Prestige</th>';
+  html += '</tr></thead><tbody>';
+  for (let i = 0; i < allPlayers.length; i++) {
+    const p = allPlayers[i];
+    const rank = i + 1;
+    let rankBadge = '';
+    if (rank === 1) rankBadge = '<span class="rank-badge rank-1">🥇</span>';
+    else if (rank === 2) rankBadge = '<span class="rank-badge rank-2">🥈</span>';
+    else if (rank === 3) rankBadge = '<span class="rank-badge rank-3">🥉</span>';
+    else rankBadge = '<span class="rank-badge rank-other">' + rank + '</span>';
+    const isPlayer = p.isPlayer;
+    html += '<tr class="' + (isPlayer ? 'player-row' : '') + '">';
+    html += '<td>' + rankBadge + '</td>';
+    html += '<td><div class="lb-name">' + escHtml(p.name) + (isPlayer ? '<span class="lb-you-badge">JIJ</span>' : '') + '</div></td>';
+    html += '<td><strong>' + Math.floor(p.rep).toLocaleString('nl-NL') + '</strong></td>';
+    html += '<td>' + (p.buildings || 0) + '</td>';
+    html += '<td>' + (p.staff || 0) + '</td>';
+    html += '<td class="prestige-stars">' + (p.prestige > 0 ? '✨'.repeat(Math.min(p.prestige, 5)) : '—') + '</td>';
+    html += '</tr>';
+  }
+  html += '</tbody></table></div>';
+  return html;
+}
+
+function renderFirestoreLeaderboard(snapshot) {
+  const container = document.getElementById('leaderboard-container');
+  if (!container) return;
+  const currentUid = fbAuth.currentUser ? fbAuth.currentUser.uid : null;
+  const docs = [];
+  snapshot.forEach(doc => docs.push({ uid: doc.id, ...doc.data() }));
+  let html = '<div style="margin-bottom:12px;font-size:14px;color:var(--text-secondary)">🌐 Live leaderboard — top ' + docs.length + ' spelers</div>';
+  html += '<div style="overflow-x:auto"><table class="lb-table"><thead><tr>';
+  html += '<th>#</th><th>Naam</th><th>REP</th><th>Prestige</th>';
+  html += '</tr></thead><tbody>';
+  for (let i = 0; i < docs.length; i++) {
+    const p = docs[i];
+    const rank = i + 1;
+    const isMe = p.uid === currentUid;
+    let rankBadge = '';
+    if (rank === 1) rankBadge = '<span class="rank-badge rank-1">🥇</span>';
+    else if (rank === 2) rankBadge = '<span class="rank-badge rank-2">🥈</span>';
+    else if (rank === 3) rankBadge = '<span class="rank-badge rank-3">🥉</span>';
+    else rankBadge = '<span class="rank-badge rank-other">' + rank + '</span>';
+    html += '<tr class="' + (isMe ? 'player-row' : '') + '">';
+    html += '<td>' + rankBadge + '</td>';
+    html += '<td><div class="lb-name">' + escHtml(p.name || '?') + (isMe ? '<span class="lb-you-badge">JIJ</span>' : '') + '</div></td>';
+    html += '<td><strong>' + Math.floor(p.rep || 0).toLocaleString('nl-NL') + '</strong></td>';
+    html += '<td class="prestige-stars">' + ((p.prestige || 0) > 0 ? '✨'.repeat(Math.min(p.prestige, 5)) : '—') + '</td>';
+    html += '</tr>';
+  }
+  html += '</tbody></table></div>';
+  container.innerHTML = html;
+}
+
+function renderRaids() {
+  const container = document.getElementById('raids-container');
+  if (!container) return;
+  const now = Date.now();
+  const raidsLeft = 3 - gameState.raidsToday;
+  let html = '';
+  // Info bar
+  html += '<div class="card mb-16">';
+  html += '<div class="card-title">⚔️ Raid Status</div>';
+  html += '<div class="d-flex gap-16 align-center" style="flex-wrap:wrap">';
+  html += '<div><span class="text-muted text-sm">Raids vandaag: </span><strong>' + gameState.raidsToday + '/3</strong></div>';
+  html += '<div><span class="text-muted text-sm">Energie: </span><strong>' + Math.floor(gameState.energy) + '/200</strong></div>';
+  html += '<div><span class="text-muted text-sm">Energie per raid: </span><strong>50</strong></div>';
+  if (gameState.shield > now) {
+    const secs = Math.ceil((gameState.shield - now)/1000);
+    html += '<div><span class="tag tag-success">🛡️ Beschermd ' + secs + 's</span></div>';
+  }
+  html += '</div>';
+  if (gameState.energy < 50) html += '<div class="tag tag-danger mt-8">⚡ Te weinig energie voor raid (minimum 50)</div>';
+  if (raidsLeft <= 0) html += '<div class="tag tag-warning mt-8">Je hebt vandaag al 3 raids uitgevoerd!</div>';
+  html += '</div>';
+  // Targets
+  html += '<div class="card mb-16">';
+  html += '<div class="card-title">🎯 Raiddoelen</div>';
+  html += '<div class="raid-targets-grid">';
+  const targets = [...gameState.leaderboard].sort((a,b) => b.rep - a.rep);
+  for (const target of targets) {
+    const cooldown = gameState.raidCooldowns[target.id];
+    const onCooldown = cooldown && now < cooldown;
+    const cooldownSecs = onCooldown ? Math.ceil((cooldown - now)/1000) : 0;
+    const defenseRating = Math.min(100, (target.buildings || 0) * 10);
+    const canRaid = !onCooldown && raidsLeft > 0 && gameState.energy >= 50;
+    html += '<div class="raid-target-card">';
+    html += '<div class="raid-target-name">' + escHtml(target.name) + '</div>';
+    html += '<div class="raid-target-stats">⭐ ' + Math.floor(target.rep).toLocaleString('nl-NL') + ' REP &nbsp;|&nbsp; 🏫 ' + (target.buildings||0) + ' gebouwen</div>';
+    html += '<div class="raid-target-stats">🛡️ Verdediging: <strong>' + defenseRating + '%</strong></div>';
+    if (onCooldown) {
+      html += '<div class="raid-cooldown">⏳ Cooldown: ' + cooldownSecs + 's</div>';
+    }
+    html += '<button class="btn btn-danger btn-sm mt-8 w-full" onclick="performRaid(\'' + target.id + '\')"' + (!canRaid ? ' disabled' : '') + '>⚔️ Raiden</button>';
+    html += '</div>';
+  }
+  html += '</div></div>';
+  // Raid log
+  html += '<div class="card">';
+  html += '<div class="card-title">📜 Raid Log</div>';
+  if (gameState.raidLog.length === 0) {
+    html += '<p class="text-muted text-sm">Nog geen raids uitgevoerd.</p>';
+  } else {
+    html += '<div style="overflow-x:auto"><table class="raid-log-table"><thead><tr><th>Tijd</th><th>Doel</th><th>Resultaat</th><th>Coins</th><th>Opmerking</th></tr></thead><tbody>';
+    for (const entry of gameState.raidLog) {
+      const time = new Date(entry.time).toLocaleTimeString('nl-NL', {hour:'2-digit',minute:'2-digit'});
+      const rowClass = entry.result === 'success' ? 'raid-success' : 'raid-fail';
+      const resultLabel = entry.result === 'success' ? '✅ Succes' : '❌ Mislukt';
+      html += '<tr class="' + rowClass + '">';
+      html += '<td>' + time + '</td>';
+      html += '<td>' + escHtml(entry.target) + '</td>';
+      html += '<td>' + resultLabel + '</td>';
+      html += '<td>' + (entry.coins > 0 ? '+' + entry.coins : '—') + '</td>';
+      html += '<td>' + escHtml(entry.msg || '') + '</td>';
+      html += '</tr>';
+    }
+    html += '</tbody></table></div>';
+  }
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function renderQuests() {
+  const container = document.getElementById('quests-container');
+  const resetText = document.getElementById('quest-reset-text');
+  if (!container) return;
+  // Reset timer
+  const msLeft = Math.max(0, (gameState.quests.lastReset + QUEST_RESET_INTERVAL_MS) - Date.now());
+  const secsLeft = Math.ceil(msLeft / 1000);
+  const minsLeft = Math.floor(secsLeft / 60);
+  const secRem = secsLeft % 60;
+  if (resetText) resetText.textContent = 'Reset over: ' + minsLeft + ':' + String(secRem).padStart(2,'0');
+  const daily = gameState.quests.daily;
+  let html = '';
+  for (const [key, q] of Object.entries(daily)) {
+    const pct = Math.min(100, (q.progress / q.goal) * 100);
+    html += '<div class="quest-card' + (q.completed ? ' completed' : '') + '">';
+    html += '<div class="quest-header"><div class="quest-name">' + q.name + '</div>';
+    html += '<div class="quest-reward">💰 +' + q.reward + '</div></div>';
+    html += '<div class="quest-desc">' + q.desc + '</div>';
+    html += '<div class="quest-progress-row"><span class="quest-progress-text">' + q.progress + ' / ' + q.goal + '</span>';
+    if (q.completed) html += '<span class="tag tag-success">✓ Voltooid</span>';
+    html += '</div>';
+    html += '<div class="progress-bar-wrap"><div class="progress-bar rep" style="width:' + pct + '%"></div></div>';
+    html += '</div>';
+  }
+  container.innerHTML = html;
+}
+
+function renderAchievements() {
+  const container = document.getElementById('achievements-container');
+  const countText = document.getElementById('achievement-count-text');
+  if (!container) return;
+  const unlocked = gameState.achievements.length;
+  if (countText) countText.textContent = unlocked + ' / ' + ACHIEVEMENTS.length + ' ontgrendeld';
+  let html = '';
+  for (const ach of ACHIEVEMENTS) {
+    const isUnlocked = gameState.achievements.includes(ach.id);
+    const date = isUnlocked && gameState.achievementDates[ach.id]
+      ? new Date(gameState.achievementDates[ach.id]).toLocaleDateString('nl-NL')
+      : null;
+    html += '<div class="achievement-badge ' + (isUnlocked ? 'unlocked' : 'locked') + '">';
+    html += '<span class="achievement-emoji">' + (isUnlocked ? ach.emoji : '🔒') + '</span>';
+    html += '<div class="achievement-name">' + ach.name + '</div>';
+    html += '<div class="achievement-desc">' + ach.description + '</div>';
+    if (date) html += '<div class="achievement-date">✓ ' + date + '</div>';
+    html += '</div>';
+  }
+  container.innerHTML = html;
+}
+
+function renderUpgrades() {
+  const container = document.getElementById('upgrades-container');
+  if (!container) return;
+  let html = '';
+  // Building upgrades section
+  html += '<div class="card mb-16">';
+  html += '<div class="card-title">��️ Gebouw Upgrades</div>';
+  if (gameState.buildings.length === 0) {
+    html += '<p class="text-muted text-sm">Je hebt nog geen gebouwen om te upgraden.</p>';
+  } else {
+    html += '<div class="upgrade-cards-grid">';
+    for (let i = 0; i < gameState.buildings.length; i++) {
+      const b = gameState.buildings[i];
+      const def = BUILDINGS.find(x => x.id === b.id);
+      if (!def) continue;
+      const maxLevel = b.level >= 5;
+      const upgCost = maxLevel ? null : def.upgradeCost[b.level - 1];
+      const canAfford = upgCost && gameState.coins >= upgCost;
+      html += '<div class="upgrade-card">';
+      html += '<div class="upgrade-emoji">' + def.emoji + '</div>';
+      html += '<div class="upgrade-info">';
+      html += '<div class="upgrade-name">' + def.name + '</div>';
+      html += '<div class="upgrade-desc">' + def.description + '</div>';
+      html += '<div class="upgrade-reqs">Level: <strong>' + b.level + '/5</strong> &nbsp; ';
+      html += '<span style="color:var(--accent)">' + '★'.repeat(b.level) + '☆'.repeat(5-b.level) + '</span></div>';
+      if (maxLevel) {
+        html += '<span class="tag tag-success">✓ Maximaal level</span>';
+      } else {
+        html += '<div class="upgrade-reqs">Upgrade kosten: <strong>💰 ' + upgCost + '</strong></div>';
+        html += '<button class="btn btn-accent btn-sm mt-8" onclick="upgradeBuilding(' + i + ')"' + (!canAfford ? ' disabled' : '') + '>⬆️ Upgraden</button>';
+      }
+      html += '</div></div>';
+    }
+    html += '</div>';
+  }
+  html += '</div>';
+  // Special upgrades section
+  html += '<div class="card">';
+  html += '<div class="card-title">⚙️ Speciale Upgrades</div>';
+  html += '<p class="text-muted text-sm mb-16">Permanente verbeteringen voor je school. Vereisen Kennis punten.</p>';
+  html += '<div class="upgrade-cards-grid">';
+  for (const upg of SPECIAL_UPGRADES) {
+    const owned = gameState.specialUpgrades.includes(upg.id);
+    const canAffordCoins = gameState.coins >= upg.cost;
+    const canAffordKnow = gameState.knowledge >= upg.knowledgeReq;
+    const canBuy = !owned && canAffordCoins && canAffordKnow;
+    html += '<div class="upgrade-card' + (owned ? ' owned' : '') + '">';
+    html += '<div class="upgrade-emoji">' + upg.emoji + '</div>';
+    html += '<div class="upgrade-info">';
+    html += '<div class="upgrade-name">' + upg.name + '</div>';
+    html += '<div class="upgrade-desc">' + upg.description + '</div>';
+    html += '<div class="upgrade-reqs">Kosten: 💰 ' + upg.cost + ' &nbsp;|&nbsp; 📚 ' + upg.knowledgeReq + ' Kennis</div>';
+    if (owned) {
+      html += '<span class="upgrade-owned-badge">✓ Gekocht</span>';
+    } else {
+      html += '<button class="btn btn-primary btn-sm mt-8" onclick="buySpecialUpgrade(\'' + upg.id + '\')"' + (!canBuy ? ' disabled' : '') + '>Kopen</button>';
+      if (!canAffordKnow) html += '<div class="text-xs text-danger mt-4">Onvoldoende Kennis</div>';
+      else if (!canAffordCoins) html += '<div class="text-xs text-danger mt-4">Onvoldoende Coins</div>';
+    }
+    html += '</div></div>';
+  }
+  html += '</div></div>';
+  container.innerHTML = html;
+}
+
+function renderShop() {
+  // Update collection progress
+  const el = document.getElementById('collection-progress-bar');
+  if (!el) return;
+  const owned = gameState.staff.length;
+  const total = TEACHERS.length;
+  const pct = Math.round((owned / total) * 100);
+  el.innerHTML = '<div style="display:flex;justify-content:space-between;margin-bottom:6px"><span class="text-sm">Docenten verzameld</span><span class="text-sm fw-bold">' + owned + ' / ' + total + ' (' + pct + '%)</span></div>' +
+    '<div class="progress-bar-wrap"><div class="progress-bar rep" style="width:' + pct + '%"></div></div>' +
+    '<p class="text-xs text-muted mt-8">Verzamel alle ' + total + ' docenten voor compleetder gameplay!</p>';
+}
+
+function renderSettings() {
+  const container = document.getElementById('settings-container');
+  if (!container) return;
+  const isDark = document.documentElement.dataset.theme === 'dark';
+  const totalTime = Math.floor(gameState.totalPlayTime / 60);
+  let html = '';
+  // Prestige banner
+  if (gameState.prestige > 0) {
+    html += '<div class="prestige-banner mb-16">';
+    html += '<div class="prestige-stars">✨'.repeat(Math.min(gameState.prestige,5)) + '</div>';
+    html += '<div class="prestige-info"><div class="prestige-title">Prestige Niveau ' + gameState.prestige + '</div>';
+    html += '<div class="prestige-subtitle">+' + (gameState.prestige*10) + '% permanente productiebonus</div></div>';
+    html += '</div>';
+  }
+  html += '<div class="card mb-16"><div class="settings-section">';
+  html += '<div class="settings-section-title">Uiterlijk</div>';
+  html += '<div class="settings-row"><div><div class="settings-label">Donkere modus</div><div class="settings-sub">Pas het kleurenschema aan</div></div>';
+  html += '<label class="toggle-switch"><input type="checkbox" id="dark-mode-check"' + (isDark ? ' checked' : '') + ' onchange="toggleDarkMode()"><span class="toggle-slider"></span></label></div>';
+  html += '</div></div>';
+  html += '<div class="card mb-16"><div class="settings-section">';
+  html += '<div class="settings-section-title">Speler</div>';
+  html += '<div class="settings-row"><div><div class="settings-label">Spelersnaam</div><div class="settings-sub">' + escHtml(gameState.playerName || 'Onbekend') + '</div></div></div>';
+  html += '</div></div>';
+  html += '<div class="card mb-16"><div class="settings-section">';
+  html += '<div class="settings-section-title">Statistieken</div>';
+  html += '<div class="stats-grid">';
+  html += '<div class="stat-box"><span class="stat-box-val">' + totalTime + '</span><div class="stat-box-label">Minuten gespeeld</div></div>';
+  html += '<div class="stat-box"><span class="stat-box-val">' + Math.floor(gameState.totalCoinsEarned).toLocaleString('nl-NL') + '</span><div class="stat-box-label">Coins verdiend</div></div>';
+  html += '<div class="stat-box"><span class="stat-box-val">' + gameState.prestige + '</span><div class="stat-box-label">Prestige niveau</div></div>';
+  html += '<div class="stat-box"><span class="stat-box-val">' + gameState.successfulRaids + '</span><div class="stat-box-label">Raids gewonnen</div></div>';
+  html += '</div></div></div>';
+  html += '<div class="card mb-16"><div class="settings-section">';
+  html += '<div class="settings-section-title">Prestige</div>';
+  html += '<p class="text-muted text-sm mb-12">Prestigieuzen reset je campus maar behoudt je docenten en geeft een permanente +10% bonus.</p>';
+  html += '<p class="text-sm mb-12">Vereiste: <strong>10.000 REP</strong> (Jij hebt: <strong>' + Math.floor(gameState.rep).toLocaleString('nl-NL') + '</strong>)</p>';
+  html += '<button class="btn btn-accent" onclick="showPrestigeConfirm()"' + (gameState.rep < PRESTIGE_REP_REQUIREMENT ? ' disabled' : '') + '>✨ Prestige Nu</button>';
+  html += '</div></div>';
+  html += '<div class="card"><div class="settings-section">';
+  html += '<div class="settings-section-title">Opslaan & Resetten</div>';
+  html += '<div class="d-flex gap-12" style="flex-wrap:wrap">';
+  html += '<button class="btn btn-primary" onclick="saveGame();showNotification(\'Opgeslagen!\',\'success\')">💾 Nu Opslaan</button>';
+  html += '<button class="btn btn-danger" onclick="resetGame()">🗑️ Spel Resetten</button>';
+  html += '</div>';
+  if (gameState.lastSave) {
+    const saveDate = new Date(gameState.lastSave).toLocaleTimeString('nl-NL');
+    html += '<p class="text-xs text-muted mt-8">Laatste opslag: ' + saveDate + '</p>';
+  }
+  html += '</div></div>';
+  container.innerHTML = html;
+}
+// ============================================================
+// MODAL FUNCTIONS
+// ============================================================
+function openBuildingModal(tileIndex) {
+  activeTileIndex = tileIndex;
+  const modalGrid = document.getElementById('building-grid-modal');
+  if (!modalGrid) return;
+  let html = '';
+  for (const def of BUILDINGS) {
+    const existing = gameState.buildings.filter(b => b.id === def.id).length;
+    const maxed = existing >= def.maxCount;
+    const canAfford = gameState.coins >= def.cost;
+    const disabled = maxed || !canAfford;
+    let prodSummary = [];
+    for (const [k,v] of Object.entries(def.production || {})) {
+      const icons = {coins:'💰',rep:'⭐',energy:'⚡',chaos:'🔥',knowledge:'📚'};
+      prodSummary.push((v>0?'+':'')+v+' '+(icons[k]||k));
+    }
+    if (def.defense) prodSummary.push('🛡️ -' + def.defense + '% raid');
+    if (def.repMultiplier) prodSummary.push('⭐ x' + def.repMultiplier + ' REP');
+    if (def.coinProtection) prodSummary.push('🔒 ' + Math.round(def.coinProtection*100) + '% bescherming');
+    let reason = '';
+    if (maxed) reason = '(max ' + def.maxCount + ')';
+    else if (!canAfford) reason = '(geen coins)';
+    html += '<div class="building-option' + (disabled ? ' disabled' : '') + '" onclick="' + (!disabled ? 'buildBuilding(\'' + def.id + '\',' + tileIndex + ')' : '') + '">';
+    html += '<div class="building-option-emoji">' + def.emoji + '</div>';
+    html += '<div class="building-option-name">' + def.name + ' ' + reason + '</div>';
+    html += '<div class="building-option-cost">💰 ' + def.cost + '</div>';
+    html += '<div class="building-option-prod">' + prodSummary.join(' | ') + '</div>';
+    html += '<div style="font-size:10px;color:var(--text-secondary);margin-top:4px">' + def.description + '</div>';
+    html += '</div>';
+  }
+  modalGrid.innerHTML = html;
+  openModal('building-modal');
+}
+
+function openBuildingInfoModal(buildingIndex) {
+  activeBuildingIndex = buildingIndex;
+  const building = gameState.buildings[buildingIndex];
+  if (!building) return;
+  const def = BUILDINGS.find(b => b.id === building.id);
+  if (!def) return;
+  const titleEl = document.getElementById('binfo-title');
+  const contentEl = document.getElementById('binfo-content');
+  const footerEl = document.getElementById('binfo-footer');
+  if (titleEl) titleEl.textContent = def.emoji + ' ' + def.name;
+  const maxLevel = building.level >= 5;
+  const upgCost = maxLevel ? null : def.upgradeCost[building.level - 1];
+  const canAffordUpg = upgCost && gameState.coins >= upgCost;
+  const assignedTeacher = building.assignedStaff ? TEACHERS.find(t => t.id === building.assignedStaff) : null;
+  const isDisabled = gameState.disabledBuildings[building.tile] && gameState.disabledBuildings[building.tile] > Date.now();
+  let html = '';
+  html += '<div style="text-align:center;font-size:48px;margin-bottom:12px">' + def.emoji + '</div>';
+  html += '<div style="text-align:center;margin-bottom:12px">';
+  html += '<span class="level-stars">' + '★'.repeat(building.level) + '☆'.repeat(5-building.level) + '</span>';
+  html += '<span class="text-muted text-sm"> Level ' + building.level + ' / 5</span>';
+  html += '</div>';
+  html += '<p class="text-muted text-sm mb-12">' + def.description + '</p>';
+  if (isDisabled) html += '<div class="tag tag-danger mb-8">⚠️ Tijdelijk uitgeschakeld</div>';
+  // Production table
+  const lvl = building.level;
+  const prodEntries = Object.entries(def.production || {});
+  if (prodEntries.length > 0) {
+    html += '<div class="card-title">📊 Productie (Level ' + lvl + ')</div>';
+    html += '<table class="binfo-prod-table"><tbody>';
+    const icons = {coins:'💰',rep:'⭐',energy:'⚡',chaos:'🔥',knowledge:'📚'};
+    for (const [k,v] of prodEntries) {
+      const scaled = v * lvl;
+      const color = scaled > 0 ? 'var(--success)' : 'var(--danger)';
+      html += '<tr><td>' + (icons[k]||k) + ' ' + capFirst(k) + '</td><td style="color:'+color+';font-weight:700">' + (scaled>0?'+':'') + scaled + '/s</td></tr>';
+    }
+    if (def.defense) html += '<tr><td>🛡️ Verdediging</td><td style="color:var(--success);font-weight:700">+' + def.defense + '%</td></tr>';
+    if (def.repMultiplier) html += '<tr><td>⭐ REP Multiplier</td><td style="font-weight:700">x' + def.repMultiplier + '</td></tr>';
+    if (def.coinProtection) html += '<tr><td>🔒 Coin Bescherming</td><td style="font-weight:700">' + Math.round(def.coinProtection*100) + '%</td></tr>';
+    html += '</tbody></table>';
+  }
+  // Assigned teacher
+  html += '<div class="divider"></div>';
+  html += '<div class="card-title">👤 Docent</div>';
+  if (assignedTeacher) {
+    html += '<div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--bg);border-radius:var(--radius-sm)">';
+    html += '<span style="font-size:24px">' + assignedTeacher.emoji + '</span>';
+    html += '<div><div style="font-weight:700">' + assignedTeacher.name + '</div>';
+    html += '<div class="text-muted text-xs">' + assignedTeacher.perk + '</div></div>';
+    html += '</div>';
+  } else {
+    html += '<p class="text-muted text-sm">Geen docent toegewezen. Wijs een docent toe via de Docenten-pagina.</p>';
+  }
+  // Assign select in modal
+  if (gameState.staff.length > 0) {
+    html += '<div class="mt-12"><label class="form-label">Docent toewijzen:</label>';
+    html += '<select class="assign-select" onchange="assignTeacher(this.value, ' + buildingIndex + ');closeModal(\'building-info-modal\');renderCampus()">';
+    html += '<option value="">— Geen —</option>';
+    for (const tid of gameState.staff) {
+      const t = TEACHERS.find(x => x.id === tid);
+      if (!t) continue;
+      const isCurrent = building.assignedStaff === tid;
+      const isOccupied = !isCurrent && gameState.buildings.some(b => b.assignedStaff === tid && b.tile !== building.tile);
+      html += '<option value="' + tid + '"' + (isCurrent ? ' selected' : '') + (isOccupied ? ' disabled' : '') + '>' + t.emoji + ' ' + t.name + (isOccupied ? ' (elders)' : '') + '</option>';
+    }
+    html += '</select></div>';
+  }
+  if (contentEl) contentEl.innerHTML = html;
+  // Footer buttons
+  if (footerEl) {
+    let footHtml = '<button class="btn btn-outline" onclick="closeModal(\'building-info-modal\')">Sluiten</button>';
+    if (!maxLevel) {
+      footHtml += '<button class="btn btn-accent" onclick="upgradeBuilding(' + buildingIndex + ')"' + (!canAffordUpg ? ' disabled' : '') + '>⬆️ Upgraden (💰 ' + upgCost + ')</button>';
+    }
+    footHtml += '<button class="btn btn-danger" onclick="confirmRemoveBuilding(' + buildingIndex + ')">🗑️ Verwijderen</button>';
+    footerEl.innerHTML = footHtml;
+  }
+  openModal('building-info-modal');
+}
+
+function confirmRemoveBuilding(buildingIndex) {
+  showConfirmModal(
+    'Gebouw verwijderen',
+    'Weet je zeker dat je dit gebouw wil verwijderen? Je krijgt geen coins terug.',
+    () => removeBuilding(buildingIndex)
+  );
+}
+
+function showTeacherReveal(teacher) {
+  const content = document.getElementById('teacher-reveal-content');
+  if (!content) return;
+  const rarityLabels = { common:'⬜ Gewoon', rare:'🔵 Zeldzaam', epic:'🟣 Episch', legendary:'🌟 Legendair' };
+  content.innerHTML = '<div class="reveal-card ' + teacher.rarity + '">' +
+    '<span class="reveal-emoji">' + teacher.emoji + '</span>' +
+    '<div class="reveal-name">' + teacher.name + '</div>' +
+    '<div class="reveal-subject">' + teacher.subject + '</div>' +
+    '<span class="rarity-badge ' + teacher.rarity + '">' + (rarityLabels[teacher.rarity]||teacher.rarity) + '</span>' +
+    '<div class="reveal-perk"><strong>⚡ Perk:</strong> ' + teacher.perk + '</div>' +
+    '<div class="teacher-quote mt-8">"' + teacher.quote + '"</div>' +
+    '</div>';
+  if (teacher.rarity === 'legendary' || teacher.rarity === 'epic') spawnConfetti();
+  openModal('teacher-reveal-modal');
+}
+
+function showConfirmModal(title, text, onConfirm) {
+  const titleEl = document.getElementById('confirm-title');
+  const textEl = document.getElementById('confirm-text');
+  const okBtn = document.getElementById('confirm-ok-btn');
+  if (titleEl) titleEl.textContent = title;
+  if (textEl) textEl.textContent = text;
+  if (okBtn) {
+    okBtn.onclick = () => { closeModal('confirm-modal'); onConfirm(); };
+  }
+  openModal('confirm-modal');
+}
+
+function openModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('hidden');
+}
+
+function closeModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.add('hidden');
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function navigateTo(tab) {
+  currentTab = tab;
+  // Hide all tabs
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  // Show target tab
+  const target = document.querySelector('[data-tab="' + tab + '"]');
+  if (target) target.classList.add('active');
+  // Update nav items
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.tab === tab);
+  });
+  // Unsubscribe previous leaderboard listener when leaving leaderboard tab
+  if (tab !== 'leaderboard' && fbLeaderboardUnsubscribe) {
+    fbLeaderboardUnsubscribe();
+    fbLeaderboardUnsubscribe = null;
+  }
+  // Render the tab
+  switch(tab) {
+    case 'campus': renderCampus(); break;
+    case 'docenten': renderStaff(); break;
+    case 'leaderboard': renderLeaderboard(); subscribeFirestoreLeaderboard(); break;
+    case 'raids': renderRaids(); break;
+    case 'quests': renderQuests(); break;
+    case 'achievements': renderAchievements(); break;
+    case 'upgrades': renderUpgrades(); break;
+    case 'shop': renderShop(); break;
+    case 'settings': renderSettings(); break;
+  }
+  // Close sidebar on mobile
+  closeSidebar();
+}
+
+// ============================================================
+// DARK MODE
+// ============================================================
+function toggleDarkMode() {
+  const html = document.documentElement;
+  const isDark = html.dataset.theme === 'dark';
+  html.dataset.theme = isDark ? 'light' : 'dark';
+  localStorage.setItem('ichthus_theme', html.dataset.theme);
+  const btn = document.getElementById('dark-toggle');
+  if (btn) btn.textContent = isDark ? '🌙' : '☀️';
+  const checkbox = document.getElementById('dark-mode-check');
+  if (checkbox) checkbox.checked = !isDark;
+}
+
+function setupDarkMode() {
+  const saved = localStorage.getItem('ichthus_theme');
+  if (saved) {
+    document.documentElement.dataset.theme = saved;
+    const btn = document.getElementById('dark-toggle');
+    if (btn) btn.textContent = saved === 'dark' ? '☀️' : '🌙';
+  }
+}
+
+// ============================================================
+// SIDEBAR (MOBILE)
+// ============================================================
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('visible');
+}
+
+function closeSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  sidebar.classList.remove('open');
+  overlay.classList.remove('visible');
+}
+
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
+function showNotification(message, type, title) {
+  type = type || 'success';
+  const container = document.getElementById('notifications');
+  if (!container) return;
+  const icons = { success:'✅', error:'❌', warning:'⚠️', info:'ℹ️' };
+  const el = document.createElement('div');
+  el.className = 'notification ' + type;
+  el.innerHTML = '<span class="notif-icon">' + (icons[type]||'✅') + '</span>' +
+    '<div class="notif-body">' +
+    (title ? '<div class="notif-title">' + escHtml(title) + '</div>' : '') +
+    '<div class="notif-msg">' + escHtml(message) + '</div>' +
+    '</div>' +
+    '<button class="notif-dismiss" onclick="this.parentElement.remove()">✕</button>' +
+    '<div class="notif-progress"></div>';
+  container.appendChild(el);
+  // Limit stack to 5
+  while (container.children.length > 5) container.removeChild(container.firstChild);
+  // Auto-dismiss after 3.2s
+  setTimeout(() => {
+    el.classList.add('fade-out');
+    setTimeout(() => { if (el.parentElement) el.remove(); }, 300);
+  }, 3200);
+}
+
+// ============================================================
+// CONFETTI
+// ============================================================
+function spawnConfetti() {
+  const container = document.getElementById('confetti-container');
+  if (!container) return;
+  const colors = ['#F0A500','#003366','#FFD700','#28a745','#dc3545','#9C27B0','#2196F3','#FF69B4','#00BCD4'];
+  for (let i = 0; i < 50; i++) {
+    setTimeout(() => {
+      const piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      piece.style.left = Math.random() * 100 + 'vw';
+      piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+      piece.style.width = (8 + Math.random() * 8) + 'px';
+      piece.style.height = (8 + Math.random() * 8) + 'px';
+      piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      piece.style.animationDuration = (2 + Math.random() * 2) + 's';
+      piece.style.transform = 'rotate(' + (Math.random() * 360) + 'deg)';
+      container.appendChild(piece);
+      setTimeout(() => piece.remove(), 4500);
+    }, i * 40);
+  }
+}
+
+// ============================================================
+// COIN FLOAT
+// ============================================================
+function spawnCoinFloat(amount) {
+  const el = document.createElement('div');
+  el.className = 'coin-float';
+  el.textContent = '+' + amount + ' 💰';
+  el.style.left = (40 + Math.random() * 20) + 'vw';
+  el.style.top = '50vh';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1300);
+}
+
+// ============================================================
+// QUOTE BAR
+// ============================================================
+function updateQuoteBar() {
+  const bar = document.getElementById('quote-bar');
+  if (!bar) return;
+  const allTeachers = gameState.staff.length > 0
+    ? gameState.staff.map(id => TEACHERS.find(t => t.id === id)).filter(Boolean)
+    : TEACHERS;
+  const t = allTeachers[Math.floor(Math.random() * allTeachers.length)];
+  if (t) bar.textContent = '📣 ' + t.name + ': "' + t.quote + '"';
+}
+
+// ============================================================
+// TUTORIAL
+// ============================================================
+const TUTORIAL_STEPS = [
+  {
+    title: '👋 Welkom bij Ichthus Tycoon!',
+    text: 'Bouw de beste school van Nederland. Hier zie je al je resources: Coins, REP, Energie, Chaos en Kennis.',
+    top: '80px', left: '50%',
+  },
+  {
+    title: '🗺️ Navigatie',
+    text: 'Gebruik de zijbalk om tussen Campus, Docenten, Shop en meer te navigeren.',
+    top: '120px', left: '220px',
+  },
+  {
+    title: '🏗️ Campus bouwen',
+    text: 'Klik op een leeg vakje ("+") om een gebouw te bouwen. Begin met een Lokaal!',
+    top: '300px', left: '50%',
+  },
+  {
+    title: '🎉 Klaar om te spelen!',
+    text: 'Je bent klaar! Bouw gebouwen, verzamel docenten, raid anderen en word de beste school!',
+    top: '50%', left: '50%',
+  },
+];
+
+function showTutorial() {
+  if (gameState.tutorialDone) return;
+  const overlay = document.getElementById('tutorial-overlay');
+  if (overlay) overlay.classList.remove('hidden');
+  renderTutorialStep();
+}
+
+function renderTutorialStep() {
+  const step = TUTORIAL_STEPS[gameState.tutorialStep];
+  if (!step) { hideTutorial(); return; }
+  const box = document.getElementById('tutorial-box');
+  const title = document.getElementById('tutorial-title');
+  const text = document.getElementById('tutorial-text');
+  const stepEl = document.getElementById('tutorial-step');
+  if (box) {
+    box.style.top = step.top;
+    box.style.left = step.left;
+    box.style.transform = 'translateX(-50%)';
+  }
+  if (title) title.textContent = step.title;
+  if (text) text.textContent = step.text;
+  if (stepEl) stepEl.textContent = 'Stap ' + (gameState.tutorialStep+1) + ' / ' + TUTORIAL_STEPS.length;
+}
+
+function nextTutorialStep() {
+  gameState.tutorialStep++;
+  if (gameState.tutorialStep >= TUTORIAL_STEPS.length) {
+    hideTutorial();
+  } else {
+    renderTutorialStep();
+  }
+}
+
+function hideTutorial() {
+  gameState.tutorialDone = true;
+  const overlay = document.getElementById('tutorial-overlay');
+  if (overlay) overlay.classList.add('hidden');
+}
+
+// ============================================================
+// EASTER EGGS
+// ============================================================
+function handleLogoClick() {
+  gameState.logoClickCount = (gameState.logoClickCount || 0) + 1;
+  if (gameState.logoClickCount === LOGO_EASTER_EGG_CLICKS) {
+    gameState.logoClickCount = 0;
+    showNotification('"Ik heb de sleutels. Ik heb de macht." — Conciërge Jan 🔑', 'info', 'Conciërge Jan zegt:');
+    spawnConfetti();
+  }
+}
+
+function handleKeyboardEgg(event) {
+  // Konami code
+  konamiSequence.push(event.key);
+  if (konamiSequence.length > KONAMI_CODE.length) konamiSequence.shift();
+  if (JSON.stringify(konamiSequence) === JSON.stringify(KONAMI_CODE)) {
+    gameState.coins += 1000;
+    showNotification('Cheat code! Jan de conciërge heeft je gezien... 👀 +1000 coins', 'warning', '👁️ Betrapt!');
+    konamiSequence = [];
+  }
+  // "ichthus" easter egg
+  ichthusBuffer += event.key.toLowerCase();
+  if (ichthusBuffer.length > 7) ichthusBuffer = ichthusBuffer.slice(-7);
+  if (ichthusBuffer === 'ichthus') {
+    ichthusBuffer = '';
+    spawnFishAnimation();
+  }
+}
+
+function spawnFishAnimation() {
+  const fishes = ['🐟','🐠','🐡','🦈','🐬'];
+  for (let i = 0; i < 5; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'fish-swim-elem';
+      el.textContent = fishes[Math.floor(Math.random() * fishes.length)];
+      el.style.top = (10 + Math.random() * 80) + 'vh';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 3100);
+    }, i * 400);
+  }
+  showNotification('🐟 Ichthus! Vissen zwemmen door je school!', 'info');
+}
+
+// ============================================================
+// UTILITY FUNCTIONS
+// ============================================================
+function rarityLabel(rarity) {
+  const labels = { common:'Gewoon', rare:'Zeldzaam', epic:'Episch', legendary:'Legendair' };
+  return labels[rarity] || rarity;
+}
+
+function capFirst(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function fmt(n) {
+  return Math.floor(n).toLocaleString('nl-NL');
+}
+
+// ============================================================
+// EVENT LISTENERS & INIT
+// ============================================================
+document.addEventListener('keydown', handleKeyboardEgg);
+
+// Initialize once
+let _gameInited = false;
+function _tryInit() {
+  if (_gameInited) return;
+  _gameInited = true;
+
+  const nameInput = document.getElementById('player-name-input');
+  if (nameInput) {
+    nameInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') startNewGame();
+    });
+  }
+
+  // Close modals on overlay click
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', function(e) {
+      if (e.target === this) {
+        const id = this.id;
+        if (id !== 'welcome-modal') closeModal(id);
+      }
+    });
+  });
+
+  initGame();
+  // Apply Firebase user info if auth state was already resolved before game init
+  const fbUser = fbAuth.currentUser;
+  if (fbUser) {
+    gameState.playerName = fbUser.displayName || fbUser.email;
+    saveGame();
+    syncLeaderboardToFirestore();
+  }
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', _tryInit);
+} else {
+  _tryInit();
+}
+
+// ============================================================
+// FIREBASE AUTH & FIRESTORE LEADERBOARD
+// ============================================================
+function syncLeaderboardToFirestore() {
+  const user = fbAuth.currentUser;
+  if (!user) return;
+  fbDb.collection('leaderboard').doc(user.uid).set({
+    name: user.displayName || user.email,
+    rep: Math.floor(gameState.rep),
+    prestige: gameState.prestige || 0,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).catch(err => console.warn('Leaderboard sync failed:', err));
+}
+
+function subscribeFirestoreLeaderboard() {
+  if (!fbAuth.currentUser) return;
+  // Unsubscribe any previous listener first
+  if (fbLeaderboardUnsubscribe) {
+    fbLeaderboardUnsubscribe();
+    fbLeaderboardUnsubscribe = null;
+  }
+  fbLeaderboardUnsubscribe = fbDb.collection('leaderboard')
+    .orderBy('rep', 'desc')
+    .limit(25)
+    .onSnapshot(snapshot => {
+      if (currentTab === 'leaderboard') {
+        renderFirestoreLeaderboard(snapshot);
+      }
+    }, err => {
+      console.warn('Leaderboard snapshot error:', err);
+    });
+}
+
+document.getElementById('btn-login-google').addEventListener('click', () => {
+  fbAuth.signInWithPopup(new firebase.auth.GoogleAuthProvider())
+    .catch(err => showNotification('Google login mislukt: ' + err.message, 'error'));
+});
+
+document.getElementById('btn-login-ms').addEventListener('click', () => {
+  fbAuth.signInWithPopup(new firebase.auth.OAuthProvider('microsoft.com'))
+    .catch(err => showNotification('Microsoft login mislukt: ' + err.message, 'error'));
+});
+
+document.getElementById('btn-logout').addEventListener('click', () => fbAuth.signOut().catch(err => console.warn('Sign out failed:', err)));
+
+fbAuth.onAuthStateChanged(user => {
+  if (user) {
+    document.getElementById('btn-login-google').style.display = 'none';
+    document.getElementById('btn-login-ms').style.display = 'none';
+    document.getElementById('auth-user').style.display = 'flex';
+    document.getElementById('auth-name').textContent = user.displayName || user.email;
+    // Override player name in game state (only after game is initialized to avoid overwriting save)
+    if (_gameInited) {
+      gameState.playerName = user.displayName || user.email;
+      saveGame();
+      syncLeaderboardToFirestore();
+      // Refresh leaderboard if currently on that tab
+      if (currentTab === 'leaderboard') {
+        subscribeFirestoreLeaderboard();
+      }
+    }
+  } else {
+    document.getElementById('btn-login-google').style.display = '';
+    document.getElementById('btn-login-ms').style.display = '';
+    document.getElementById('auth-user').style.display = 'none';
+    // Unsubscribe Firestore listener on logout
+    if (fbLeaderboardUnsubscribe) {
+      fbLeaderboardUnsubscribe();
+      fbLeaderboardUnsubscribe = null;
+    }
+    // Re-render leaderboard with fake data if on that tab
+    if (_gameInited && currentTab === 'leaderboard') {
+      renderLeaderboard();
+    }
+  }
+});
 </script>
 </body>
 </html>
